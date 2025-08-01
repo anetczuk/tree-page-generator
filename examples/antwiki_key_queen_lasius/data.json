@@ -1,0 +1,383 @@
+{
+    "start": "1",
+    "data": {
+        "1": [
+            {
+                "description": "Metapleural gland opening provided with conspicuous guard hairs; in side view the scutum does not overhang the pronotum but shares with it the anterior thoracic convexity",
+                "next": "2",
+                "target": null
+            },
+            {
+                "description": "Metapleural gland opening lacking guard hairs; in side view the scutum overhangs the pronotum and claims all of the anterior thoracic convexity",
+                "next": "22",
+                "target": null
+            }
+        ],
+        "2": [
+            {
+                "description": "HW distinctly less than the width of the thorax just anterior to the regulae",
+                "next": "3",
+                "target": null
+            },
+            {
+                "description": "HW about the same as or greater than the width of the thorax just anterior to the regulae",
+                "next": "13",
+                "target": null
+            }
+        ],
+        "3": [
+            {
+                "description": "Length of terminal segment of maxillary palp exeeeding 0.1 X the HW, even if only slightly",
+                "next": "4",
+                "target": null
+            },
+            {
+                "description": "Length of terminal segment of maxillary palp less, than 0.1 X the HW, even if by only a slight amount",
+                "next": "10",
+                "target": null
+            }
+        ],
+        "4": [
+            {
+                "description": "When viewed with mandibles opened and the head held in perfect full face (at maximum head length and with the occipital and anterior clypeal borders horizontally aligned), the median third of the anterior border of the median clypeal lobe is flat or emarginate; all the queens of a nest series with at least one and often two or three offset teeth present on the basal angle and along the basal border of the mandible (North America)",
+                "next": null,
+                "target": [
+                    "Lasius pallitarsis",
+                    "https://antwiki.org/wiki/Lasius_pallitarsis"
+                ]
+            },
+            {
+                "description": "When viewed as above, the median third of the anterior border of the median clypeal lobe convex or angulate, never flat or emarginate; the posterior basal tooth, with rare exceptions, always aligned with the adjacent teeth of the masticatory border; when it is offset, this condition occurs in a minority of the individuals of the nest series and usually only on one mandible in any individual, and secondary offset teeth are never present on the basal border",
+                "next": "5",
+                "target": null
+            }
+        ],
+        "5": [
+            {
+                "description": "When viewed with the mandibles opened and the head held in perfect full face, the anterior border of the median clypeal lobe is angulate, with two straight or very feebly convex sides meeting in a blunt point at the midline; in a large part of any nest series the penultimate basal tooth is distinctly reduced in size relative to the two flanking teeth (North American species only)",
+                "next": "6",
+                "target": null
+            },
+            {
+                "description": "When viewed as above, the anterior border of the median clypeal lobe is broadly and evenly rounded; with rare exceptions the penultimate basal tooth is about the same size as the two flanking teeth",
+                "next": "7",
+                "target": null
+            }
+        ],
+        "6": [
+            {
+                "description": "Scapes and tibiae with numerous standing hairs",
+                "next": null,
+                "target": [
+                    "Lasius neoniger",
+                    "https://antwiki.org/wiki/Lasius_neoniger"
+                ]
+            },
+            {
+                "description": "Scapes and tibiae lacking 'standing hairs",
+                "next": null,
+                "target": [
+                    "Lasius sitiens",
+                    "https://antwiki.org/wiki/Lasius_sitiens"
+                ]
+            }
+        ],
+        "7": [
+            {
+                "description": "Length of terminal segment of maxillary palp 0.32-0.34 mm. in the several series measured (Japan)",
+                "next": null,
+                "target": [
+                    "Lasius productus",
+                    "https://antwiki.org/wiki/Lasius_productus"
+                ]
+            },
+            {
+                "description": "Length of terminal segment of maxillary palp not exceeding 0.26 mm",
+                "next": "8",
+                "target": null
+            }
+        ],
+        "8": [
+            {
+                "description": "Scape with numerous standing hairs",
+                "next": null,
+                "target": [
+                    "Lasius niger",
+                    "https://antwiki.org/wiki/Lasius_niger"
+                ]
+            },
+            {
+                "description": "Scape with few or no standing hairs, although decumbent hairs may be numerous",
+                "next": "9",
+                "target": null
+            }
+        ],
+        "9": [
+            {
+                "description": "Scape with numerous decumbent hairs outstanding above the pubescence",
+                "next": null,
+                "target": [
+                    "Lasius emarginatus",
+                    "https://antwiki.org/wiki/Lasius_emarginatus"
+                ]
+            },
+            {
+                "description": "Scape with few or no decumbent hairs outstanding above the pubescence",
+                "next": null,
+                "target": [
+                    "Lasius brunneus",
+                    "https://antwiki.org/wiki/Lasius_brunneus"
+                ]
+            }
+        ],
+        "10": [
+            {
+                "description": "Scape with numerous standing hairs (eastern Asia)",
+                "next": null,
+                "target": [
+                    "Lasius talpa",
+                    "https://antwiki.org/wiki/Lasius_talpa"
+                ]
+            },
+            {
+                "description": "Scape with few or no standing hairs",
+                "next": "11",
+                "target": null
+            }
+        ],
+        "11": [
+            {
+                "description": "Tibiae with numerous standing hairs (western U.S.)",
+                "next": null,
+                "target": [
+                    "Lasius fallax",
+                    "https://antwiki.org/wiki/Lasius_fallax"
+                ]
+            },
+            {
+                "description": "Tibiae with few or no standing hairs",
+                "next": "12",
+                "target": null
+            }
+        ],
+        "12": [
+            {
+                "description": "Terminal segment of maxillary palp usually longer than the penultimate (see diagnosis) (eastern North America to Wyoming)",
+                "next": null,
+                "target": [
+                    "Lasius nearcticus",
+                    "https://antwiki.org/wiki/Lasius_nearcticus"
+                ]
+            },
+            {
+                "description": "Terminal segment not exceeding in length the penultimate segment (Palearctic)",
+                "next": null,
+                "target": [
+                    "Lasius flavus",
+                    "https://antwiki.org/wiki/Lasius_flavus"
+                ]
+            }
+        ],
+        "13": [
+            {
+                "description": "HW 0.76-0.78 mm.; petiole in side view thick, resembling an inverted U (Eurasia)",
+                "next": null,
+                "target": [
+                    "Lasius carniolicus",
+                    "https://antwiki.org/wiki/Lasius_carniolicus"
+                ]
+            },
+            {
+                "description": "HW exceeding 1.00 mm.; petiole in side view thinner, with a narrow dorsal crest",
+                "next": "14",
+                "target": null
+            }
+        ],
+        "14": [
+            {
+                "description": "Alitrunk and gaster covered with extremely long, fine, predominantly appressed hairs; HW of single specimen measured 1.99 mm. (Himalayas)",
+                "next": null,
+                "target": [
+                    "Lasius crinitus",
+                    "https://antwiki.org/wiki/Lasius_crinitus"
+                ]
+            },
+            {
+                "description": "Pilosity of alitrunk and gaster otherwise; HW never exceeding 1.75 mm",
+                "next": "15",
+                "target": null
+            }
+        ],
+        "15": [
+            {
+                "description": "The dorsal border of the petiole in frontal view narrow and deeply emarginate, the depth of the emargination measured from the level of the bicornuate dorsal crest to the bottom of the emargination at least as great as the width of the emargination measured at the level of the middle of the depth measurement (Eurasia)",
+                "next": null,
+                "target": [
+                    "Lasius bicornis",
+                    "https://antwiki.org/wiki/Lasius_bicornis"
+                ]
+            },
+            {
+                "description": "Dorsal border of the petiole with never more than a right-angular emargination",
+                "next": "16",
+                "target": null
+            }
+        ],
+        "16": [
+            {
+                "description": "HW not exceeding 1.17 mm",
+                "next": "17",
+                "target": null
+            },
+            {
+                "description": "HW at least 1.40 mm",
+                "next": "18",
+                "target": null
+            }
+        ],
+        "17": [
+            {
+                "description": "First gastric tergite densely covered with coarse standing hairs, the longest of which exceed in length the maximum width of the hind tibia at its midlength (eastern North America)",
+                "next": null,
+                "target": [
+                    "Lasius minutus",
+                    "https://antwiki.org/wiki/Lasius_minutus"
+                ]
+            },
+            {
+                "description": "First gastric tergite with relatively sparse, fine hairs, the longest of which do not exceed in length 0.8 X the maximum width of the hind tibia at its midlength (southwestern U. S.)",
+                "next": null,
+                "target": [
+                    "Lasius humilis",
+                    "https://antwiki.org/wiki/Lasius_humilis"
+                ]
+            }
+        ],
+        "18": [
+            {
+                "description": "The longest hairs of the first gastric tergite exclusive of the extreme posterior strip not exceeding in length 0.5 X the. maximum width of the hind tibia at its midlength",
+                "next": "19",
+                "target": null
+            },
+            {
+                "description": "The longest hairs of the first gastric tergite, exclusive of the extreme posterior strip, about as long as the maximum width of the hind tibia at its midlength",
+                "next": "21",
+                "target": null
+            }
+        ],
+        "19": [
+            {
+                "description": "Dorsal surfaces of second and third gastric tergites completely devoid of pubescence and strongly shining (eastern U.S.)",
+                "next": null,
+                "target": [
+                    "Lasius speculiventris",
+                    "https://antwiki.org/wiki/Lasius_speculiventris"
+                ]
+            },
+            {
+                "description": "Dorsal surfaces of second and third gastric tergites covered by appressed pubescence which often partly obscures the shining cuticular surface",
+                "next": "20",
+                "target": null
+            }
+        ],
+        "20": [
+            {
+                "description": "Scapes conspicuously flattened, the minimum width at midlength not exceeding 0.10 mm. (Fig. lo5) (Eurasia)",
+                "next": null,
+                "target": [
+                    "Lasius rabaudi",
+                    "https://antwiki.org/wiki/Lasius_rabaudi"
+                ]
+            },
+            {
+                "description": "Scapes short-elliptical in cross-section, the minimum width at midlength not less than 0.11 mm, (Palearctic)",
+                "next": null,
+                "target": [
+                    "Lasius umbratus",
+                    "https://antwiki.org/wiki/Lasius_umbratus"
+                ]
+            }
+        ],
+        "21": [
+            {
+                "description": "Pilosity of anterior gastric tergites predominantly erect",
+                "next": null,
+                "target": [
+                    "Lasius vestitus",
+                    "https://antwiki.org/wiki/Lasius_vestitus"
+                ]
+            },
+            {
+                "description": "Pilosity of anterior gastric tergites predominantly decumbent-subdecumbent",
+                "next": null,
+                "target": [
+                    "Lasius subumbratus",
+                    "https://antwiki.org/wiki/Lasius_subumbratus"
+                ]
+            }
+        ],
+        "22": [
+            {
+                "description": "A \u201cbeta\u201d form, with conspicuously flattened scapes, femora, tibiae, and metatarsi; thorax completely lacking hairs of any kind",
+                "next": "23",
+                "target": null
+            },
+            {
+                "description": "An \u201calpha\u201d form, showing no conspicuous flattening of the appendages; thorax with abundant hairs",
+                "next": "24",
+                "target": null
+            }
+        ],
+        "23": [
+            {
+                "description": "Head about as broad as long; petiolar scale symmetrical in side view, with both the anterior and posterior faces gently convex",
+                "next": null,
+                "target": [
+                    "Lasius orientalis",
+                    "https://antwiki.org/wiki/Lasius_orientalis"
+                ]
+            },
+            {
+                "description": "Head much broader than long, anterior border of petiolar scale in side view angulate, being parallel with the posterior border up to the level of the petiolar spiracle but then bending abruptly back to form an oblique face up to the dorsal crest",
+                "next": null,
+                "target": [
+                    "Lasius spathepus",
+                    "https://antwiki.org/wiki/Lasius_spathepus"
+                ]
+            }
+        ],
+        "24": [
+            {
+                "description": "Many of the body and appendage hairs curved at the tip or sinuate, those on the appendages often curving back to touch the cuticular surface again; body pubescence sparse or absent, the cuticular surface smooth and shining",
+                "next": null,
+                "target": [
+                    "Lasius crispus",
+                    "https://antwiki.org/wiki/Lasius_crispus"
+                ]
+            },
+            {
+                "description": "Few or no hairs curved at the tip or sinuate; body covered with appressed pubescence which at least partly obscures the cuticular surface",
+                "next": "25",
+                "target": null
+            }
+        ],
+        "25": [
+            {
+                "description": "A sharp median carina runs from the frontal triangle to a small shallow pit in the center of the clypeus; C1 about 97",
+                "next": null,
+                "target": [
+                    "Lasius buccatus",
+                    "https://antwiki.org/wiki/Lasius_buccatus"
+                ]
+            },
+            {
+                "description": "Median clypeal carina weakly developed and running most of the length of the clypeus, not ending in a central pit; C1 as least 100",
+                "next": null,
+                "target": [
+                    "Lasius fuliginosus",
+                    "https://antwiki.org/wiki/Lasius_fuliginosus"
+                ]
+            }
+        ]
+    }
+}

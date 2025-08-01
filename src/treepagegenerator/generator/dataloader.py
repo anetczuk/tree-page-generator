@@ -32,10 +32,17 @@ class NavDict:
         for key, desc_list in model_data.items():
             next_list = []
             for desc_index, desc_item in enumerate(desc_list):
-                next_item = desc_item.get("next")
-                if next_item:
-                    next_list.append((next_item, desc_index))
-                    self.prev_dict[next_item] = [(key, desc_index)]
+                next_id = desc_item.get("next")
+                if next_id:
+                    next_list.append((next_id, desc_index))
+                    self.prev_dict[next_id] = [(key, desc_index)]
+                    continue
+                target_item = desc_item.get("target")
+                if target_item:
+                    target_id = target_item[0]
+                    next_list.append((target_id, desc_index))
+                    self.prev_dict[target_id] = [(key, desc_index)]
+                    continue
             self.next_dict[key] = next_list
 
     def next_item(self, curr_id):
@@ -67,6 +74,25 @@ class NavDict:
             curr_item = ret_list[index]
             index += 1
             prev_items = self.prev_id(curr_item)
+            if not prev_items:
+                continue
+            ret_list.extend(prev_items)
+
+        ret_list.reverse()
+        return ret_list
+
+    def prev_items_list(self, curr_id) -> List[str]:
+        ret_list: List[str] = []
+        prev_items = self.prev_item(curr_id)
+        if not prev_items:
+            return ret_list
+        ret_list.extend(prev_items)
+        index = 0
+        while index < len(ret_list):
+            curr_item = ret_list[index]
+            curr_id = curr_item[0]
+            index += 1
+            prev_items = self.prev_item(curr_id)
             if not prev_items:
                 continue
             ret_list.extend(prev_items)
@@ -168,9 +194,23 @@ class DataLoader:
         total_count = len(data_list)
         return total_count
 
-    def get_all_species(self):
-        potential_species_dict = self.potential_species
-        return None
+    def get_all_leafs(self) -> List[str]:
+        model_data = self.model_data.get("data")
+        leaves_list: List[str] = []
+        for _key, val_list in model_data.items():
+            for val in val_list:
+                target_item = val.get("target")
+                if target_item:
+                    leaves_list.append( target_item[0] )
+        return leaves_list
+
+    def get_target(self, item_id, desc_index):
+        model_data = self.model_data.get("data")
+        item_data = model_data.get(item_id)
+        if not item_data:
+            return None
+        desc_item = item_data[desc_index]
+        return desc_item.get("target")
 
     def print_info(self):
         json_str = json.dumps(self.model_data, indent=4)

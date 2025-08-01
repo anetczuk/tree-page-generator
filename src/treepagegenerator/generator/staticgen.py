@@ -84,6 +84,11 @@ class StaticGenerator:
         for item_id, desc_list in model_data.items():
             self._generate_page(item_id, desc_list)
 
+        ## prepare species page
+        all_species = self.data_loader.get_all_leafs()
+        for item in all_species:
+            self._generate_species_page(item)
+
     def _generate_page(self, item_id, desc_list):
         self.page_counter += 1
         page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
@@ -151,14 +156,14 @@ class StaticGenerator:
         for val in desc_list:
             next_id = val.get("next")
             if next_id:
-                next_data = f"""<a href="{next_id}.html">{next_id}</a>"""
+                next_data = f"""<a href="{next_id}.html">next: {next_id}</a>"""
                 content += f"""<td>{next_data}</td> """
             else:
                 target = val.get("target")
                 if target:
                     target_label = target[0]
-                    target_link = target[1]
-                    next_data = f"""<a href="{target_link}">{target_label}</a>"""
+                    item_low = prepare_filename(target_label)
+                    next_data = f"""<a href="{item_low}.html">{target_label}</a>"""
                     content += f"""<td>{next_data}</td> """
                 else:
                     content += """<td>--- unknown ---</td> """
@@ -184,9 +189,8 @@ class StaticGenerator:
                 next_species.sort()
                 list_content = ["<ul>\n"]
                 for item in next_species:
-                    # item_low = prepare_filename(item)
-                    # a_href = f"""<a href="{item_low}.html">{item}</a>"""
-                    a_href = item
+                    item_low = prepare_filename(item)
+                    a_href = f"""<a href="{item_low}.html">{item}</a>"""
                     list_content.append(f"<li>{a_href}</li>\n")
                 list_content.append("</ul>\n")
                 list_str = "".join(list_content)
@@ -201,6 +205,59 @@ class StaticGenerator:
         content += """</table>\n"""
         content += """</div>\n"""
         return content
+
+    def _generate_species_page(self, species_id):
+        species_id_low = prepare_filename(species_id)
+        page_path = os.path.join(self.out_page_dir, f"{species_id_low}.html")
+
+        content = ""
+        content += f""" \
+<html>
+{HTML_LICENSE}
+
+<head>
+<link rel="stylesheet" type="text/css" href="../styles.css">
+</head>
+
+<body>
+
+"""
+
+        ## generate content
+        prev_content = "<div> Back to: "
+        prev_content += f"""<a href="{self.out_index_path}">{self.label_back_to_main}</a>"""
+        prev_content += "</div>"
+        content += prev_content
+        
+        content += "</br>"
+
+        prev_list = self.data_loader.nav_dict.prev_items_list(species_id)
+        last_item = prev_list[-1]
+        species_target = self.data_loader.get_target( *last_item )
+
+        content += f"""<div><b>{species_target[0]}</b>:</div>"""
+        content += f"""<div>Info: <a href="{species_target[1]}">{species_target[1]}</a></div>"""
+
+        model = self.data_loader.model_data
+        model_data: Dict[str, Any] = model.get("data", {})
+
+        content += "<ul>\n"
+        for prev_item in prev_list:
+            prev_id = prev_item[0]
+            prev_data = model_data[prev_id]
+            prev_desc_index = prev_item[1]
+            prev_desc_item = prev_data[prev_desc_index]
+            prev_desc = prev_desc_item.get("description")
+            char_link = f"""<a href="{prev_id}.html">{prev_id}</a>"""
+            content += f"""<li>{char_link}: {prev_desc}</li>\n"""
+        content += "</ul>\n"
+
+        content += """
+</body>
+</html>
+"""
+        write_data(page_path, content)
+        return page_path
 
 
 def prepare_filename(name: str):
