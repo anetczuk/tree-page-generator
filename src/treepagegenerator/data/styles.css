@@ -1,0 +1,41 @@
+/* general styles */
+body {
+    background-color: #ebedef;
+    width: 1024px;
+    margin: 0 auto;
+}
+
+table {
+    margin: 0 auto;
+}
+
+table td, table th {
+    border-collapse: collapse;
+    border: 10px solid rgba(255, 0, 0, 0);
+}
+
+/* make link stretch to whole cell */
+td {
+    overflow: hidden;
+}
+/* direct child */
+td > a {
+    display: block;
+    background-color: orange;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+
+.title_row {
+    font-weight: bold;
+    text-align: center;
+}
+
+.navigation_row {
+    text-align: center;
+}
+
+.species_row {
+    vertical-align: top;
+}
