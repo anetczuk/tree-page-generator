@@ -44,7 +44,7 @@ digraph data_graph {
 }
 """
 
-    with open(f"{SCRIPT_DIR}/data_graph.dot", "w", encoding="utf-8") as f:
+    with open(f"{SCRIPT_DIR}/model_graph.dot", "w", encoding="utf-8") as f:
         f.write(content)
 
 
@@ -114,7 +114,7 @@ def main():
     model_dict = {"start": first_id, "data": dict_data}
 
     json_str = json.dumps(model_dict, indent=4)
-    with open(f"{SCRIPT_DIR}/data.json", "w", encoding="utf-8") as f:
+    with open(f"{SCRIPT_DIR}/model.json", "w", encoding="utf-8") as f:
         f.write(json_str)
 
     generate_dot(model_dict)

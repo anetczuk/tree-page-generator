@@ -25,9 +25,6 @@ from treepagegenerator import logger
 from treepagegenerator.generator.dataloader import DataLoader
 from treepagegenerator.generator.staticgen import generate_pages
 
-# from treepagegenerator.generator.jsgen import generate_pages
-from treepagegenerator.generator.photogen import parse_license_file
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,13 +35,12 @@ _LOGGER = logging.getLogger(__name__)
 def process_generate(args):
     _LOGGER.info("starting generator")
     _LOGGER.debug("logging to file: %s", logger.log_file)
-    model_path = args.data
+    config_path = args.config
     translation_path = args.translation
-    embed = str(args.embedscripts).lower() != "false"
     nophotos = str(args.nophotos).lower() != "false"
     output_path = args.outdir
 
-    generate_pages(model_path, translation_path, embed, nophotos, output_path)
+    generate_pages(config_path, translation_path, nophotos, output_path)
     return 0
 
 
@@ -54,15 +50,6 @@ def process_info(args):
 
     data_loader = DataLoader(model_path)
     data_loader.print_info()
-    return 0
-
-
-def process_photos(args):
-    _LOGGER.debug("logging to file: %s", logger.log_file)
-    license_path = args.licensefile
-    output_path = args.outdir
-
-    parse_license_file(license_path, output_path)
     return 0
 
 
@@ -90,9 +77,8 @@ def main():
     )
     subparser.description = description
     subparser.set_defaults(func=process_generate)
-    subparser.add_argument("-d", "--data", action="store", required=False, help="Path to data file with model")
+    subparser.add_argument("-c", "--config", action="store", required=False, help="Path to config file")
     subparser.add_argument("-t", "--translation", action="store", required=False, help="Path to translation file")
-    subparser.add_argument("--embedscripts", action="store", default=False, help="Embed scripts into one file")
     subparser.add_argument("--nophotos", action="store", default=False, help="Do not generate image galleries")
     subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
 
@@ -103,17 +89,6 @@ def main():
     subparser.description = description
     subparser.set_defaults(func=process_info)
     subparser.add_argument("-d", "--data", action="store", required=False, help="Path to data file with model")
-
-    ## =================================================
-
-    description = "parse license file and prepare photos"
-    subparser = subparsers.add_parser(
-        "preparephotos", help=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    subparser.description = description
-    subparser.set_defaults(func=process_photos)
-    subparser.add_argument("-lf", "--licensefile", action="store", required=True, help="Path to license file")
-    subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
 
     ## =================================================
 

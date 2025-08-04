@@ -6,6 +6,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import os
 import logging
 from typing import Dict, Any, List
 import math
@@ -102,30 +103,33 @@ class NavDict:
 
 
 class DataLoader:
-    def __init__(self, model_path, translation_path=None):
-        self.model_path = model_path
+    def __init__(self, config_path, translation_path=None):
+        self.config_path = config_path
+        self.model_path = None
         self.translation_path = translation_path
 
-        self.config_dict = None
-        self.data_type_dict = None
-        self.order_dict = None
-        self.details_dict = None
-
-        self.weights_dict = None
-        self.photos_dict = None
-
-        # load data
-        # self.config_dict = self._load_config()
-        self.model_data: Dict[str, Any] = self._load_model()
+        self.config_dict = self._load_config()
+        self.model_data = self._load_model()
         self.nav_dict: NavDict = self._load_nav_dict()
 
         ## key: characteristic id
         ## value: list of species
         self.potential_species: Dict[str, List[str]] = self._load_potential_species()
 
+        self.defs_list: List[Dict[str, Any]] = self._load_all_defs()
+
         self.translation_dict = self._load_transaltion()
 
+    def _load_config(self) -> Dict[str, Any]:
+        _LOGGER.debug("loading config from file %s", self.config_path)
+        with open(self.config_path, "r", encoding="utf8") as fp:
+            return json.load(fp)
+
     def _load_model(self) -> Dict[str, Any]:
+        model_dir = self.config_dict["model_dir"]
+        config_dir = os.path.dirname(self.config_path)
+        self.model_path = os.path.join(config_dir, model_dir)
+
         _LOGGER.debug("loading model from file %s", self.model_path)
         with open(self.model_path, "r", encoding="utf8") as fp:
             return json.load(fp)
@@ -182,12 +186,49 @@ class DataLoader:
         with open(self.translation_path, "r", encoding="utf8") as fp:
             return json.load(fp)
 
+    def _load_all_defs(self) -> List[Dict[str, Any]]:
+        defs_dir = self.config_dict["defs_dir"]
+        config_dir = os.path.dirname(self.config_path)
+        defs_path = os.path.join(config_dir, defs_dir)
+        if not os.path.isdir(defs_path):
+            return None
+
+        ret_list = []
+        dirs_list = os.listdir(defs_path)
+        for dir_item in dirs_list:
+            defs_dir_path = os.path.join(defs_path, dir_item)
+            defs_file_path = os.path.join(defs_dir_path, "defs.json")
+            if not os.path.isfile(defs_file_path):
+                continue
+            try:
+                with open(defs_file_path, "r", encoding="utf8") as fp:
+                    defs_dict = json.load(fp)
+            except Exception:
+                _LOGGER.error("unable to load JSON file: %s", defs_file_path)
+                raise
+            def_items = defs_dict["items"]
+            for item in def_items:
+                image_path = item["image"]
+                image_path = os.path.join(defs_dir_path, image_path)
+                if not os.path.isfile(image_path):
+                    _LOGGER.error("could not find image in defs file: %s", defs_file_path)
+                item["image"] = image_path
+            ret_list.append(defs_dict)
+
+        return ret_list
+
     # def get_page_title(self):
     #     page_title = self.config_dict.get("page_title", "")
     #     return self.get_translation(page_title)
 
     # def get_translation(self, key: str, group: str = None) -> str:
     #     return get_translation(self.translation_dict, key, group)
+
+    def get_model_title(self):
+        return self.config_dict["title"]
+
+    def get_model_description(self):
+        return self.config_dict["description"]
 
     def get_total_count(self) -> int:
         data_list = self.model_data.get("data")
@@ -201,7 +242,7 @@ class DataLoader:
             for val in val_list:
                 target_item = val.get("target")
                 if target_item:
-                    leaves_list.append( target_item[0] )
+                    leaves_list.append(target_item[0])
         return leaves_list
 
     def get_target(self, item_id, desc_index):
@@ -226,6 +267,29 @@ class DataLoader:
         #     print(f"{char_name}: {length} {values_set}")
         # total_count = self.get_total_count()
         # print("total_count:", total_count)
+
+    def get_all_defs(self) -> List[str]:
+        defs_set = set()
+        for item in self.defs_list:
+            defs = item["defs"]
+            defs_set.update(defs)
+        defs_list = list(defs_set)
+        defs_list.sort()
+        return defs_list
+
+    
+    ## key: keyword
+    ## value: 
+    def get_defs_dict(self) -> Dict[str, Any]:
+        ret_dict = {}
+        for item in self.defs_list:
+            names_list = item["defs"]
+            items_list = item["items"]
+            for def_name in names_list:
+                def_list = ret_dict.get(def_name, [])
+                ret_dict[def_name] = def_list
+                def_list.extend(items_list)
+        return ret_dict
 
 
 # ===================================================
@@ -254,7 +318,15 @@ def is_url(value):
 
 
 def copy_image(source_path, dest_path, resize=False):
+    parts = os.path.split(dest_path)
+    os.makedirs(parts[0], exist_ok=True)
+
     if not resize:
+        shutil.copyfile(source_path, dest_path, follow_symlinks=True)
+        return
+
+    parts = os.path.splitext(source_path)
+    if parts[1] in (".svg"):
         shutil.copyfile(source_path, dest_path, follow_symlinks=True)
         return
 

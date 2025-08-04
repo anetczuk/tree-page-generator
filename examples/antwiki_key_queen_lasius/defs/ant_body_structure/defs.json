@@ -1,0 +1,7 @@
+{
+    "defs": ["abdomen", "head", "thorax", "thoracic"],
+    "items": [
+     {  "image": "102007fsubsericealabelhta.jpg",
+        "description": "<a href='https://harvardforest.fas.harvard.edu/education-opportunities/classic-outreach-resources/ants-north-quabbin-region/ant-body-structure/'>Ant Body Structure</a>, via Harvard Forest" }
+    ]
+}

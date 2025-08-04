@@ -18,16 +18,16 @@ table td, table th {
 td {
     overflow: hidden;
 }
-/* direct child */
-td > a {
+
+.next_char {
     display: block;
     background-color: orange;
     padding-top: 6px;
     padding-bottom: 6px;
 }
 
-
 .title_row {
+    font-size: 1.6em;
     font-weight: bold;
     text-align: center;
 }
@@ -38,4 +38,33 @@ td > a {
 
 .species_row {
     vertical-align: top;
+}
+
+.def_row {
+    vertical-align: top;
+}
+
+.def_item {
+    color: red !important;
+}
+
+.imgtile {
+    width: 512px;
+    float: left;
+    margin-right: 12px;
+    margin-bottom: 12px;
+}
+.imgtile img {
+    width: 512px;
+}
+
+.title {
+    font-size: 2em;
+    font-weight: bold;
+    text-align: center;
+}
+.description {
+}
+.main_section {
+    margin-top: 32px;
 }

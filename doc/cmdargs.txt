@@ -1,18 +1,16 @@
 usage: python3 -m treepagegenerator.main [-h] [-la] [--listtools]
-                                         {generate,info,preparephotos} ...
+                                         {generate,info} ...
 
 generate static pages containing tree search based on defined model
 
 options:
-  -h, --help            show this help message and exit
-  -la, --logall         Log all messages (default: False)
-  --listtools           List tools (default: False)
+  -h, --help       show this help message and exit
+  -la, --logall    Log all messages (default: False)
+  --listtools      List tools (default: False)
 
 subcommands:
   use one of tools
 
-  {generate,info,preparephotos}
-                        one of tools
-    generate            generate tree static pages
-    info                print model info
-    preparephotos       parse license file and prepare photos
+  {generate,info}  one of tools
+    generate       generate tree static pages
+    info           print model info

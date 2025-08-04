@@ -1,0 +1,11 @@
+{
+    "defs": ["antennal fossa", "alitrunk", "compound eye", "clypeus", "funiculus", "frontal lobe", "frontal lobes", "gaster", 
+             "head", "mandible", "mandibles", "mesonotum", "mesothoracic spiracle", "occiput", "pronotum", "scape", "scutellum", "tergite",
+             "metanotum", "propodeum", "propodeal spinacle", "petiole", "postpetiole", "sternite", "sting", "tarsal claw", 
+             "tarsus", "tibial spurs", "tibia", "femur", "femurs", "femora", "ventral process", "throchanter", "coxa", 
+             "katepisternum", "anepisternum", "metathoracic spiracle"],
+    "items": [
+     {  "image": "Scheme_ant_worker_anatomy-en.png",
+        "description": "<a href='https://en.wikipedia.org/wiki/File:Scheme_ant_worker_anatomy-en.svg'>Source</a>, via Wikipedia" }
+    ]
+}

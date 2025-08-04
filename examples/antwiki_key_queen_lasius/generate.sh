@@ -11,7 +11,7 @@ echo "generating data"
 
 "$SCRIPT_DIR"/scrapdata.py
 
-dot -Tpng "$SCRIPT_DIR/data_graph.dot" -o "$SCRIPT_DIR/data_graph.png"
+dot -Tpng "$SCRIPT_DIR/model_graph.dot" -o "$SCRIPT_DIR/model_graph.png"
 
 
 echo "generating pages"
@@ -24,20 +24,20 @@ rm -fr "$OUT_DIR"
 cd "$SCRIPT_DIR/../../src/"
 
 
-DATA_PATH="$SCRIPT_DIR/data.json"
+CONFIG_PATH="$SCRIPT_DIR/config.json"
+MODEL_PATH="$SCRIPT_DIR/model.json"
 
 
 if [[ $* == *--info* ]]; then
     # print only info
     python3 -m treepagegenerator.main -la info \
-                                      --data "$DATA_PATH"
+                                      --data "$MODEL_PATH"
     exit 0
 fi
 
 set -x
 python3 -m treepagegenerator.main -la generate \
-                                  --data "$DATA_PATH" \
-                                  --embedscripts true \
+                                  --config "$CONFIG_PATH" \
                                   --outdir "$OUT_DIR"
 { set +x; } 2> /dev/null
 
