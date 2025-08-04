@@ -7,11 +7,14 @@
 #
 
 import os
+import io
 import logging
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Set
 import re
 import shutil
+
+from showgraph.graphviz import Graph, set_node_style
 
 from treepagegenerator.utils import write_data
 from treepagegenerator.generator.dataloader import DataLoader, copy_image
@@ -184,6 +187,15 @@ class StaticGenerator:
         columns_num = len(desc_list)
 
         content = ""
+
+        data_graph = generate_graph(self.data_loader, item_id)
+        svg_content = get_graph_svg(data_graph)
+        content += f"""
+<div class="graph_content">
+    {svg_content}
+</div>
+"""
+
         content += """<div>\n"""
         content += """<table>\n"""
         content += "<tr> " + "<th></th> " * columns_num + "</tr>\n" ""
@@ -388,6 +400,14 @@ class StaticGenerator:
         prev_content += "</div>"
         content += prev_content
 
+        data_graph = generate_graph(self.data_loader, species_id)
+        svg_content = get_graph_svg(data_graph)
+        content += f"""
+<div class="graph_content">
+    {svg_content}
+</div>
+"""
+
         content += "</br>"
 
         content += f"""<div><b>{species_name}</b>:</div>"""
@@ -566,3 +586,59 @@ def prepare_filename(name: str):
     name = name.lower()
     name = re.sub(r"\s+", "_", name)
     return name
+
+
+## ================================================================
+
+
+def generate_graph(data_loader: DataLoader, active_item: str) -> Graph:
+    graph: Graph = Graph()
+    base_graph = graph.base_graph
+    base_graph.set_name("model_graph")
+    base_graph.set_type("digraph")
+    # base_graph.set_rankdir("LR")
+
+    model_data = data_loader.model_data["data"]
+
+    added_nodes: Set[str] = set()
+
+    ## add edges
+    for key, val_list in model_data.items():
+        for val in val_list:
+            edges = []
+            next_id = val["next"]
+            if next_id is not None:
+                edges.append((key, next_id))
+            target = val["target"]
+            if target is not None:
+                edges.append((key, target[0]))
+
+            for new_edge in edges:
+                for node in new_edge:
+                    if node in added_nodes:
+                        continue
+                    if node == active_item:
+                        graph.addNode(node, shape="ellipse")
+                        active_node = graph.getNode(node)
+                        style = {"style": "filled", "fillcolor": "yellow"}
+                        set_node_style(active_node, style)
+                    else:
+                        graph.addNode(node, shape="ellipse")
+                        active_node = graph.getNode(node)
+                        style = {"style": "filled", "fillcolor": "white"}
+                        set_node_style(active_node, style)
+                    created_node = graph.getNode(node)
+                    node_filename = prepare_filename(node)
+                    created_node.set("href", f"{node_filename}.html")
+
+                new_edge = graph.addEdge(*new_edge)
+                new_edge.set("color", "black")  # type: ignore
+    return graph
+
+
+def get_graph_svg(graph: Graph):
+    with io.BytesIO() as buffer:
+        graph.write(buffer, file_format="svg")
+        contents = buffer.getvalue()
+        contents_str = contents.decode("utf-8")
+        return contents_str

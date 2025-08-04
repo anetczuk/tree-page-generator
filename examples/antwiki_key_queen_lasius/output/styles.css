@@ -68,3 +68,11 @@ td {
 .main_section {
     margin-top: 32px;
 }
+
+.graph_content {
+    padding-top: 32px;
+}
+.graph_content svg {
+    width: 100%;
+    height: auto;
+}

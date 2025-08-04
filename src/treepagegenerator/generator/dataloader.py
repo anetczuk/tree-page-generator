@@ -277,11 +277,10 @@ class DataLoader:
         defs_list.sort()
         return defs_list
 
-    
     ## key: keyword
-    ## value: 
+    ## value:
     def get_defs_dict(self) -> Dict[str, Any]:
-        ret_dict = {}
+        ret_dict: Dict[str, Any] = {}
         for item in self.defs_list:
             names_list = item["defs"]
             items_list = item["items"]

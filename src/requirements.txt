@@ -1,1 +1,3 @@
 appdirs>=1.4.4
+
+showgraph @ git+https://github.com/anetczuk/showgraph-py#subdirectory=src
