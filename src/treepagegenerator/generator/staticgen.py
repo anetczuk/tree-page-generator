@@ -156,8 +156,9 @@ class StaticGenerator:
 
 """
 
+        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_page_dir)
         prev_content = "<div> Back to: "
-        link_list = [f"""<a href="{self.out_index_path}">{self.label_back_to_main}</a>"""]
+        link_list = [f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""]
 
         nav_dict = self.data_loader.nav_dict
         prev_items = nav_dict.prev_id_list(item_id)
@@ -337,8 +338,9 @@ class StaticGenerator:
 """
 
         ## generate content
+        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_root_dir)
         prev_content = "<div> Back to: "
-        prev_content += f"""<a href="{self.out_index_path}">{self.label_back_to_main}</a>"""
+        prev_content += f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""
         prev_content += "</div>"
         content += prev_content
 
@@ -395,8 +397,9 @@ class StaticGenerator:
 """
 
         ## generate content
+        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_page_dir)
         prev_content = "<div> Back to: "
-        prev_content += f"""<a href="{self.out_index_path}">{self.label_back_to_main}</a>"""
+        prev_content += f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""
         prev_content += "</div>"
         content += prev_content
 
@@ -467,8 +470,9 @@ class StaticGenerator:
 """
 
         ## generate content
+        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_root_dir)
         prev_content = "<div> Back to: "
-        prev_content += f"""<a href="{self.out_index_path}">{self.label_back_to_main}</a>"""
+        prev_content += f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""
         prev_content += "</div>"
         content += prev_content
 
