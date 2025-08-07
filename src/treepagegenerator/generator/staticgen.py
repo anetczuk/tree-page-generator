@@ -191,6 +191,10 @@ class StaticGenerator:
 
         data_graph = generate_graph(self.data_loader, item_id)
         svg_content = get_graph_svg(data_graph)
+
+        ## remove defined 'width' and 'height' - attributes corrupts image placement
+        svg_content = re.sub(r'<svg\s+width="\d+\S+"\s+height="\d+\S+"', "<svg", svg_content)
+
         content += f"""
 <div class="graph_content">
     {svg_content}
@@ -414,7 +418,9 @@ class StaticGenerator:
         content += "</br>"
 
         content += f"""<div><b>{species_name}</b>:</div>"""
-        content += f"""<div>Info: <a href="{species_target[1]}">{species_target[1]}</a></div>"""
+        info_url = species_target[1]
+        if info_url:
+            content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>"""
 
         model = self.data_loader.model_data
         model_data: Dict[str, Any] = model.get("data", {})
@@ -487,7 +493,9 @@ class StaticGenerator:
         for keyword in keywords_list:
             keyword_data_list = defs_dict[keyword]
             for keyword_item in keyword_data_list:
-                photo_path = keyword_item["image"]
+                photo_path = keyword_item.get("image")
+                if not photo_path:
+                    continue
                 dest_img_path = self.get_def_photo_path(photo_path)
                 copy_image(photo_path, dest_img_path, resize=False)
 
@@ -517,13 +525,20 @@ class StaticGenerator:
             keyword_data_list = defs_dict[keyword]
             keywords_content += """<td> """
             for keyword_item in keyword_data_list:
-                photo_path = keyword_item["image"]
-                dest_img_path = self.get_def_photo_path(photo_path)
-                img_rel_path = os.path.relpath(dest_img_path, page_dir)
-                description_content = keyword_item["description"]
+                def_text = keyword_item.get("text")
+                img_rel_path = None
+                photo_path = keyword_item.get("image")
+                if photo_path:
+                    dest_img_path = self.get_def_photo_path(photo_path)
+                    img_rel_path = os.path.relpath(dest_img_path, page_dir)
+                description_content = keyword_item.get("description")
                 keywords_content += """<div class="imgtile">\n"""
-                keywords_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
-                keywords_content += f"""    {description_content}\n"""
+                if def_text:
+                    keywords_content += f"""    <div>{def_text}</div>\n"""
+                if img_rel_path:
+                    keywords_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
+                if description_content:
+                    keywords_content += f"""    <div>{description_content}</div>\n"""
                 keywords_content += """</div>\n"""
 
             keywords_content += """ </td> """

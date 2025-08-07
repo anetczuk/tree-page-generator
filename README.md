@@ -7,6 +7,8 @@ Generate static pages containing tree hierarchies based on defined model.
 
 In `/examples` there are few examples of how to use the tool and what are results.
 
+[![characteristic page](examples/key_ant_queen_lasius_wilson/screens/3-page-small.png "characteristic page")](examples/key_ant_queen_lasius_wilson/screens/3-page.png)
+
 
 ## Running
 

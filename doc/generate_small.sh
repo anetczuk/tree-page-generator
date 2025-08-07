@@ -8,15 +8,14 @@ set -eu
 ##
 
 
-## works both under bash and sh
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+WORK_DIR="${PWD}"
 
 
 ## big_suffix="-big."
 small_suffix="-small."
 
 # shellcheck disable=SC2044
-for filename in $(find "$SCRIPT_DIR" -name "*.png"); do
+for filename in $(find "$WORK_DIR" -name "*.png"); do
     if [[ $filename == *"$small_suffix"* ]]; then
         continue
     fi

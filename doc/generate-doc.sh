@@ -49,4 +49,5 @@ generate_tools_help() {
 generate_tools_help
 
 
-"$SCRIPT_DIR"/generate_small.sh
+cd "${SCRIPT_DIR}"
+"${SCRIPT_DIR}"/generate_small.sh

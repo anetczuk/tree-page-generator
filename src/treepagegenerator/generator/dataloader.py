@@ -187,33 +187,39 @@ class DataLoader:
             return json.load(fp)
 
     def _load_all_defs(self) -> List[Dict[str, Any]]:
-        defs_dir = self.config_dict["defs_dir"]
-        config_dir = os.path.dirname(self.config_path)
-        defs_path = os.path.join(config_dir, defs_dir)
-        if not os.path.isdir(defs_path):
-            return None
-
         ret_list = []
-        dirs_list = os.listdir(defs_path)
-        for dir_item in dirs_list:
-            defs_dir_path = os.path.join(defs_path, dir_item)
-            defs_file_path = os.path.join(defs_dir_path, "defs.json")
-            if not os.path.isfile(defs_file_path):
+
+        defs_dirs = self.config_dict["defs_dirs"]
+        config_dir = os.path.dirname(self.config_path)
+        for defs_dir in defs_dirs:
+            defs_path = os.path.join(config_dir, defs_dir)
+            if not os.path.isdir(defs_path):
                 continue
-            try:
-                with open(defs_file_path, "r", encoding="utf8") as fp:
-                    defs_dict = json.load(fp)
-            except Exception:
-                _LOGGER.error("unable to load JSON file: %s", defs_file_path)
-                raise
-            def_items = defs_dict["items"]
-            for item in def_items:
-                image_path = item["image"]
-                image_path = os.path.join(defs_dir_path, image_path)
-                if not os.path.isfile(image_path):
-                    _LOGGER.error("could not find image in defs file: %s", defs_file_path)
-                item["image"] = image_path
-            ret_list.append(defs_dict)
+
+            dirs_list = os.listdir(defs_path)
+            for dir_item in dirs_list:
+                defs_dir_path = os.path.join(defs_path, dir_item)
+                defs_file_path = os.path.join(defs_dir_path, "defs.json")
+                if not os.path.isfile(defs_file_path):
+                    continue
+                try:
+                    with open(defs_file_path, "r", encoding="utf8") as fp:
+                        defs_dict = json.load(fp)
+                except Exception:
+                    _LOGGER.error("unable to load JSON file: %s", defs_file_path)
+                    raise
+                description_content = defs_dict.get("description")
+                def_items = defs_dict["items"]
+                for item in def_items:
+                    image_path = item.get("image")
+                    if image_path:
+                        image_path = os.path.join(defs_dir_path, image_path)
+                        if not os.path.isfile(image_path):
+                            _LOGGER.error("could not find image in defs file: %s", defs_file_path)
+                        item["image"] = image_path
+                    if "description" not in item:
+                        item["description"] = description_content
+                ret_list.append(defs_dict)
 
         return ret_list
 
@@ -269,10 +275,16 @@ class DataLoader:
         # print("total_count:", total_count)
 
     def get_all_defs(self) -> List[str]:
+        if not self.defs_list:
+            return []
         defs_set = set()
         for item in self.defs_list:
-            defs = item["defs"]
+            defs = item.get("defs", [])
             defs_set.update(defs)
+            def_items = item.get("items")
+            for def_item in def_items:
+                item_defs = def_item.get("defs", [])
+                defs_set.update(item_defs)
         defs_list = list(defs_set)
         defs_list.sort()
         return defs_list
@@ -280,14 +292,22 @@ class DataLoader:
     ## key: keyword
     ## value:
     def get_defs_dict(self) -> Dict[str, Any]:
+        if not self.defs_list:
+            return {}
         ret_dict: Dict[str, Any] = {}
         for item in self.defs_list:
-            names_list = item["defs"]
+            names_list = item.get("defs", [])
             items_list = item["items"]
             for def_name in names_list:
                 def_list = ret_dict.get(def_name, [])
                 ret_dict[def_name] = def_list
                 def_list.extend(items_list)
+            for item_item in items_list:
+                item_defs = item_item.get("defs", [])
+                for item_name in item_defs:
+                    def_list = ret_dict.get(item_name, [])
+                    ret_dict[item_name] = def_list
+                    def_list.append(item_item)
         return ret_dict
 
 

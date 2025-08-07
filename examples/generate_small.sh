@@ -6,6 +6,5 @@ set -eu
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-## 'source' is somehow simillar to C 'include'
-# shellcheck disable=SC1090
-source "$SCRIPT_DIR/../doc/generate_small.sh"
+cd "${SCRIPT_DIR}"
+"$SCRIPT_DIR/../doc/generate_small.sh"

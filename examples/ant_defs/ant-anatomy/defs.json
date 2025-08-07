@@ -1,0 +1,9 @@
+{
+    "defs": ["antenna", "compound eye", "compound eyes", "eye", "eyes", "femora", "femur", "femurs", "gaster", "head", "leg", 
+             "mandible", "mandibles", "mesosoma", "metasoma", "petiole", "petiolar", "postpetiole", "postpetiolar", 
+             "ocelli", "spiracle", "sting", "tarsi", "tibia"],
+    "items": [
+     {  "image": "ant-anatomy-2022-final.jpg",
+        "description": "<a href='https://blog.myrmecologicalnews.org/2022/08/17/ant-anatomy/'>Ant anatomy (ant morphology)</a>, via Myrmecological News Blog" }
+    ]
+}

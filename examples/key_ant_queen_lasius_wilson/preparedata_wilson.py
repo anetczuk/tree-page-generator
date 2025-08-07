@@ -117,7 +117,7 @@ def main():
     with open(f"{SCRIPT_DIR}/model.json", "w", encoding="utf-8") as f:
         f.write(json_str)
 
-    generate_dot(model_dict)
+    # generate_dot(model_dict)
 
 
 if __name__ == "__main__":
