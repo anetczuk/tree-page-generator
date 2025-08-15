@@ -74,7 +74,7 @@ class StaticGenerator:
 
         ## prepare characteristic pages
         for item_id, desc_list in model_data.items():
-            self._generate_page(item_id, desc_list)
+            self._generate_subpage(item_id, desc_list)
 
         ## prepare species pages
         all_species = self.data_loader.get_all_leafs()
@@ -138,7 +138,7 @@ class StaticGenerator:
         self.out_page_dir = os.path.join(self.out_root_dir, "page")
         os.makedirs(self.out_page_dir, exist_ok=True)
 
-    def _generate_page(self, item_id, desc_list):
+    def _generate_subpage(self, item_id, desc_list):
         self.page_counter += 1
         page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
 
@@ -165,7 +165,7 @@ class StaticGenerator:
         prev_content = self._prepare_back_to(self.out_page_dir, item_id)
         content += prev_content
 
-        page_content = self._generate_page_content(item_id, desc_list)
+        page_content = self._generate_subpage_content(item_id, desc_list)
         content += page_content
 
         content += """
@@ -178,7 +178,7 @@ class StaticGenerator:
         write_data(page_path, content)
         return page_path
 
-    def _generate_page_content(self, item_id, desc_list):
+    def _generate_subpage_content(self, item_id, desc_list):
         columns_num = len(desc_list)
 
         content = ""
@@ -524,14 +524,31 @@ class StaticGenerator:
         if not keywords_list:
             return None
 
+        model = self.data_loader.model_data
+        model_data: Dict[str, Any] = model.get("data", {})
+        model_item_keys = {}
+        ## prepare "mentioned" list
+        for item_id, desc_list in model_data.items():
+            item_keys = []
+            for val in desc_list:
+                value = val.get("description")
+                _desc, desc_keys = self._prepare_description(value)
+                item_keys.extend(desc_keys)
+            model_item_keys[item_id] = item_keys
+
         defs_dict = self.data_loader.get_defs_dict()
         keywords_content = ""
         keywords_content += """<table>\n"""
         keywords_content += """<tr class="title_row"> <td colspan="2">Keywords:</td> </tr>\n"""
         for keyword in keywords_list:
-            keywords_content += f"""<tr class="def_row"> <td class="def_item"><a name="{keyword}"></a>{keyword}</td> """
+            single_keyword_content = ""
+            single_keyword_content += (
+                f"""<tr class="def_row"> <td class="def_item"><a name="{keyword}"></a>{keyword}</td> """
+            )
             keyword_data_list = defs_dict[keyword]
-            keywords_content += """<td> """
+            single_keyword_content += """<td> """
+
+            keyword_item_content = ""
             for keyword_item in keyword_data_list:
                 def_text = keyword_item.get("text")
                 img_rel_path = None
@@ -540,17 +557,31 @@ class StaticGenerator:
                     dest_img_path = self.get_def_photo_path(photo_path)
                     img_rel_path = os.path.relpath(dest_img_path, page_dir)
                 description_content = keyword_item.get("description")
-                keywords_content += """<div class="imgtile">\n"""
+                keyword_item_content += """<div class="imgtile">\n"""
                 if def_text:
-                    keywords_content += f"""    <div>{def_text}</div>\n"""
+                    keyword_item_content += f"""    <div>{def_text}</div>\n"""
                 if img_rel_path:
-                    keywords_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
+                    keyword_item_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
                 if description_content:
-                    keywords_content += f"""    <div>{description_content}</div>\n"""
-                keywords_content += """</div>\n"""
+                    keyword_item_content += f"""    <div>{description_content}</div>\n"""
+                keyword_item_content += """</div>\n"""
 
-            keywords_content += """ </td> """
-            keywords_content += """</tr>\n"""
+            if keyword_item_content:
+                items_list = []
+                for item_id, item_desc_keys in model_item_keys.items():
+                    if keyword in item_desc_keys:
+                        item_path = os.path.join(self.out_page_dir, f"{item_id}.html")
+                        item_rel_path = os.path.relpath(item_path, page_dir)
+                        item_link = f"""<a href="{item_rel_path}">{item_id}</a>"""
+                        items_list.append(item_link)
+                if items_list:
+                    items_str = " ".join(items_list)
+                    keyword_item_content += f"""<div>Mentioned in: {items_str}</div>\n"""
+                    single_keyword_content += keyword_item_content
+                    single_keyword_content += """ </td> """
+                    single_keyword_content += """</tr>\n"""
+                    keywords_content += single_keyword_content
+
         keywords_content += """</table>\n"""
         return keywords_content
 

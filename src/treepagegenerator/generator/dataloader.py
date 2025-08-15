@@ -110,6 +110,7 @@ class DataLoader:
 
         self.config_dict = self._load_config()
         self.model_data = self._load_model()
+        ## information about next and previous items in tree
         self.nav_dict: NavDict = self._load_nav_dict()
 
         ## key: characteristic id
