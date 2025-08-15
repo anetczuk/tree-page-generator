@@ -1,0 +1,188 @@
+{
+    "start": "1",
+    "data": {
+        "1": [
+            {
+                "description": "Frontal carinae curving outwards to merge with rugae, which surround antennal sockets (Plate IX: 11); antennal scape weakly curved at base, without angle or carina (Plate IX: 1)",
+                "next": "2",
+                "target": null
+            },
+            {
+                "description": "Frontal carinae not curving outwards, projecting beyond the upper level of eyes; antennal sockets not surrounded by rugae (Plate IX: 13, 14) or if so, rugae join frontal carinae near upper third of lengths of carinae (Plate IX: 12); antennal scape angulate, with carina or lobe, or at least much strongly curved at base (Plate IX: 2-10)",
+                "next": "3",
+                "target": null
+            }
+        ],
+        "2": [
+            {
+                "description": "Petiolar node with rounded dorsum; nodes of petiole and postpetiole smooth or only with fine sculpture, not coarsely rugulose; propodeal spines short (Plate IX: 15)",
+                "next": null,
+                "target": [
+                    "Myrmica rubra",
+                    null
+                ]
+            },
+            {
+                "description": "Petiolar node with distinctly flattened dorsum; nodes of petiole and postpetiole coarsely rugulose; propodeal spines long (Plate IX: 16)",
+                "next": null,
+                "target": [
+                    "Myrmica ruginodis",
+                    null
+                ]
+            }
+        ],
+        "3": [
+            {
+                "description": "Antennal scape at base angulate, with vertical lobe or dent (Plate IX: 2). Antennal sockets surrounded by rugae, which join frontal carinae near upper third of their length",
+                "next": "4",
+                "target": null
+            },
+            {
+                "description": "Antennal scape at base of different shape, but never with vertical lobe or dent (Plate IX: 3-10)",
+                "next": "5",
+                "target": null
+            }
+        ],
+        "4": [
+            {
+                "description": "Petiole with very short peduncle, its frontal surface steep, slightly concave and meets with dorsal surface at right or even acute angle (Plate IX: 17)",
+                "next": null,
+                "target": [
+                    "Myrmica lobicornis",
+                    null
+                ]
+            },
+            {
+                "description": "Petiole with well developed peduncle, its frontal surface not steep, distinctly concave and meets with dorsal surface at blunt angle (Plate IX: 18)",
+                "next": null,
+                "target": [
+                    "Myrmica schencki",
+                    null
+                ]
+            }
+        ],
+        "5": [
+            {
+                "description": "Antennal sockets surrounded by rugae, which join frontal carinae near upper third of length of carinae (Plate IX: 12); antennal scape at base strongly curved, but not angulate and without horizontal carina or lobe (Plate IX: 3); alitrunk, petiolar and postpetiolar nodes with very coarse longitudinal rugae; petiole without distinct peduncle, its frontal surface straight and steep, meets with dorsal surface at right angle (Plate IX: 19)",
+                "next": null,
+                "target": [
+                    "Myrmica sulcinodis",
+                    null
+                ]
+            },
+            {
+                "description": "Antennal sockets not surrounded by rugae (Plate IX: 13, 14); antennal scape at base curved, without angle, or angulate, with horizontal carina or lobe (Plate IX: 4-10)",
+                "next": "6",
+                "target": null
+            }
+        ],
+        "6": [
+            {
+                "description": "Postpetiole very broad, wider than length, PPI>0.56 (Plate IX: 20); whole body with very abundant, long standing hairs",
+                "next": null,
+                "target": [
+                    "Myrmica hirsuta",
+                    null
+                ]
+            },
+            {
+                "description": "Postpetiole not broad, its width subequal to length, PPI<0.50 (Plate IX: 21); standing hairs on body less abundant",
+                "next": "7",
+                "target": null
+            }
+        ],
+        "7": [
+            {
+                "description": "Antennal scape at base curved, without horizontal lobe or carina, at most slightly angulate (Plate IX: 4,5)",
+                "next": "8",
+                "target": null
+            },
+            {
+                "description": "Antennal scape at base distinctly angulate, with horizontal carina or lobe (Plate IX: 6-10)",
+                "next": "9",
+                "target": null
+            }
+        ],
+        "8": [
+            {
+                "description": "Antennal scape at base bent in ideal curve (Plate IX: 4); head longitudinally rugulose, reticulate sculpture present only between occiput and eyes (Plate IX: 13)",
+                "next": null,
+                "target": [
+                    "Myrmica gallienii",
+                    null
+                ]
+            },
+            {
+                "description": "Antennal scape at base more sharply curved and slightly angulate (Plate IX: 5); frons and genae longitudinally rugulose, upper third of head with reticulate sculpture (Plate IX: 14)",
+                "next": null,
+                "target": [
+                    "Myrmica rugulosa",
+                    null
+                ]
+            }
+        ],
+        "9": [
+            {
+                "description": "Antennal scape at base with weak carina (Plate IX: 6); frontal lobes slightly curved, frons wider: FLI 1.10-1.45, FI 2.14-2.30",
+                "next": null,
+                "target": [
+                    "Myrmica hellenica",
+                    null
+                ]
+            },
+            {
+                "description": "Antennal scape at base with lobe at least with distinct carina (Plate IX: 7-10); frontal lobes strongly curved, frons narrower: FLI 1.18-1.8, FI 2.60-3.50",
+                "next": "10",
+                "target": null
+            }
+        ],
+        "10": [
+            {
+                "description": "Antennal scape at base with large, often very massive lobe (Plate IX: 7, 8); frontal lobes more strongly curved, frons narrower: FLI 1.59-1.86, FI 3.04-3.50",
+                "next": "11",
+                "target": null
+            },
+            {
+                "description": "Antennal scape at base with much smaller lobe or sometimes only with carina (Plate IX: 9, 10); frontal lobes less strongly curved, frons wider: FLI 1.18-1.68, FI 2.60-3.21",
+                "next": "12",
+                "target": null
+            }
+        ],
+        "11": [
+            {
+                "description": "Antennal scape at base with very large, massive lobe (SWI 4.92-6.00) (Plate IX: 7) clearly raised at scape level (SHI 2.77-3.41) (to be viewed in profile, Platc IX: 7a)",
+                "next": null,
+                "target": [
+                    "Myrmica lonae",
+                    null
+                ]
+            },
+            {
+                "description": "Antennal scape at base with smaller and not massive lobe (SWI 6.00-8.28) (Plate IX: 8) not raised at scape level (SHI 3.50-4.57) (to be viewed in profile, Plate IX: 8a)",
+                "next": null,
+                "target": [
+                    "Myrmica sabuleti",
+                    null
+                ]
+            }
+        ],
+        "12": [
+            {
+                "description": "Petiole with distinct, sharp horizontal dorsal plate; its posterior face abruptly falls to postpetiole (Plate IX: 22). Antennal scape at base with wider lobe (Plate IX: 9)",
+                "next": null,
+                "target": [
+                    "Myrmica scabrinodis",
+                    null
+                ]
+            },
+            {
+                "description": "Petiole without distinct horizontal dorsal plate; its posterior face smoothly falls to postpetiole (Plate IX: 23); antennal scape at base with narrow lobe or even carina (Plate IX: 10)",
+                "next": null,
+                "target": [
+                    "Myrmica specioides",
+                    null
+                ]
+            }
+        ]
+    }
+}

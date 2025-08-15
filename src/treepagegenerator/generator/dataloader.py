@@ -117,6 +117,13 @@ class DataLoader:
         ## value: list of species
         self.potential_species: Dict[str, List[str]] = self._load_potential_species()
 
+        ## [  defs_dict: {  "defs": [ str ]
+        ##                  "casesensitive": bool
+        ##                  "image": str
+        ##                  "text": str
+        ##                  "description": str
+        ##               }
+        ## ]
         self.defs_list: List[Dict[str, Any]] = self._load_all_defs()
 
         self.translation_dict = self._load_transaltion()
@@ -187,6 +194,13 @@ class DataLoader:
         with open(self.translation_path, "r", encoding="utf8") as fp:
             return json.load(fp)
 
+    ## [  {  "defs": [ str ]
+    ##       "casesensitive": bool
+    ##       "image": str
+    ##       "text": str
+    ##       "description": str
+    ##    }
+    ## ]
     def _load_all_defs(self) -> List[Dict[str, Any]]:
         ret_list = []
 
@@ -203,6 +217,20 @@ class DataLoader:
                 defs_file_path = os.path.join(defs_dir_path, "defs.json")
                 if not os.path.isfile(defs_file_path):
                     continue
+
+                #### "defs.json" file specification:
+                ## [  def_dict: {  "defs": [ str ]
+                ##                 "casesensitive": bool
+                ##                 "description": str
+                ##                 "items": {  "defs": [ str ]
+                ##                             "casesensitive": bool
+                ##                             "image": str
+                ##                             "text": str
+                ##                             "description": str
+                ##                          }
+                ##              }
+                ## ] || def_dict
+                defs_data = None
                 try:
                     with open(defs_file_path, "r", encoding="utf8") as fp:
                         defs_data = json.load(fp)
@@ -217,8 +245,9 @@ class DataLoader:
                     defs_list.append(defs_data)
 
                 for defs_dict in defs_list:
-                    casesensitive = defs_dict.get("casesensitive", False)
-                    description_content = defs_dict.get("description")
+                    def_defs = defs_dict.pop("defs", [])
+                    def_casesensitive = defs_dict.pop("casesensitive", False)
+                    def_description = defs_dict.pop("description", None)
                     def_items = defs_dict["items"]
                     for item in def_items:
                         image_path = item.get("image")
@@ -227,11 +256,13 @@ class DataLoader:
                             if not os.path.isfile(image_path):
                                 _LOGGER.error("could not find image in defs file: %s", defs_file_path)
                             item["image"] = image_path
+                        if "defs" not in item:
+                            item["defs"] = def_defs
                         if "casesensitive" not in item:
-                            item["casesensitive"] = casesensitive
+                            item["casesensitive"] = def_casesensitive
                         if "description" not in item:
-                            item["description"] = description_content
-                    ret_list.append(defs_dict)
+                            item["description"] = def_description
+                        ret_list.append(item)
 
         return ret_list
 
@@ -282,45 +313,51 @@ class DataLoader:
         # total_count = self.get_total_count()
         # print("total_count:", total_count)
 
+    ### [ (str, bool) ]
     def get_all_defs(self) -> List[str]:
         if not self.defs_list:
             return []
         defs_set = set()
-        for item in self.defs_list:
-            defs = item.get("defs", [])
-            item_casesensitive = item.get("casesensitive", False)
-            defs = [ (item, item_casesensitive) for item in defs ]
+        for defs_dict in self.defs_list:
+            defs = defs_dict.get("defs", [])
+            item_casesensitive = defs_dict.get("casesensitive", False)
+            defs = [(item, item_casesensitive) for item in defs]
             defs_set.update(defs)
-            def_items = item.get("items")
-            for def_item in def_items:
-                item_defs = def_item.get("defs", [])
-                def_item_casesensitive = def_item.get("casesensitive", item_casesensitive)
-                item_defs = [ (item, def_item_casesensitive) for item in item_defs ]
-                defs_set.update( item_defs )
         defs_list = list(defs_set)
         defs_list = sorted(defs_list, key=lambda xtuple: (-len(xtuple[0]), *xtuple))
         return defs_list
 
-    ## key: keyword
-    ## value: List[Any]
+    ## defs_dict: {  def: str,
+    ##               item:  [  {  "casesensitive": bool
+    ##                            "image": str
+    ##                            "text": str
+    ##                            "description": str
+    ##                         }
+    ##                      ]
+    ##            }
     def get_defs_dict(self) -> Dict[str, Any]:
         if not self.defs_list:
             return {}
         ret_dict: Dict[str, Any] = {}
-        for item in self.defs_list:
-            names_list = item.get("defs", [])
-            items_list = item["items"]
+        for defs_dict in self.defs_list:
+            names_list = defs_dict.get("defs", [])
+            copied_item = defs_dict.copy()
+            del copied_item["defs"]
             for def_name in names_list:
                 def_list = ret_dict.get(def_name, [])
+                def_list.append(copied_item)
                 ret_dict[def_name] = def_list
-                def_list.extend(items_list)
-            for item_item in items_list:
-                item_defs = item_item.get("defs", [])
-                for item_name in item_defs:
-                    def_list = ret_dict.get(item_name, [])
-                    ret_dict[item_name] = def_list
-                    def_list.append(item_item)
         return ret_dict
+
+    def get_defs(self, def_name) -> List[Any]:
+        if not self.defs_list:
+            return []
+        ret_list = []
+        for def_dict in self.defs_list:
+            defs_list = def_dict.get("defs", [])
+            if def_name in defs_list:
+                ret_list.append(def_dict)
+        return ret_list
 
 
 # ===================================================

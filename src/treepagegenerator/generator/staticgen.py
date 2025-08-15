@@ -32,6 +32,22 @@ def generate_pages(config_path, translation_path, _nophotos, output_path):
     data_loader = DataLoader(config_path, translation_path)
     gen.generate(data_loader, output_path)
 
+    # check_defs_repetitions(data_loader)
+
+
+def check_defs_repetitions(data_loader: DataLoader):
+    defs_list = data_loader.defs_list
+    for def_dict in defs_list:
+        defs_list = def_dict.get("defs", [])
+        repeated_def = True
+        for def_name in defs_list:
+            found_defs = data_loader.get_defs(def_name)
+            if len(found_defs) < 2:
+                repeated_def = False
+                break
+        if repeated_def:
+            _LOGGER.info("found repeated def: %s", defs_list)
+
 
 ## ============================================
 
@@ -174,7 +190,7 @@ class StaticGenerator:
 """
         progress = self.page_counter / self.total_count * 100
         # progress = int(self.page_counter / self.total_count * 10000) / 100
-        _LOGGER.debug("%f%% writing page: %s", progress, page_path)
+        _LOGGER.debug("%.2f%% writing page: %s", progress, page_path)
         write_data(page_path, content)
         return page_path
 

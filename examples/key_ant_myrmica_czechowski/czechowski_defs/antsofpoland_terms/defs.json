@@ -1,0 +1,45 @@
+{
+    "casesensitive": true,
+    "description": "<i>Wojciech Czechowski, Alexander Radchenko, Wiesława Czechowska. 2002. The ants (Hymenoptera, Formicidae) of Poland</i>",
+    "items": [
+         {  "defs": ["HW"],
+            "text": "maximum width of head in full-face view directly behind eyes (see Plate III: 1)"
+         },
+         {  "defs": ["FW"],
+            "text": "minimum width of frons between frontal lobes (see Plate III: 1)" 
+         },
+         {  "defs": ["FLW"],
+            "text": "maximum width between external borders of frontal lobes (see Plate III: 1)" 
+         },
+         {  "defs": ["PPW"],
+            "text": "maximum width of postpetiole from above" 
+         },
+         {  "defs": ["SL"],
+            "text": "maximum straight-line length of antennal scape in profile (see Plate III: 4; compare SL')" 
+         },    
+         {  "defs": ["SL'"],
+            "text": "scape length (see Plate III: 5; compare SL)" 
+         },
+         {  "defs": ["SW"],
+            "text": "width of lobe at the base of antennal scape (see Plate III: 5)" 
+         },
+         {  "defs": ["SH"],
+            "text": "height of antennal scape (see Plate III: 6)" 
+         },
+         {  "defs": ["FI"],
+            "text": "(frontal index) = HW/FW" 
+         },
+         {  "defs": ["FLI"],
+            "text": "(frontal lobe index) = FLW/FW" 
+         },
+         {  "defs": ["SHI"],
+            "text": "(scape height index) = SL/SH" 
+         },
+         {  "defs": ["SWI"],
+            "text": "(scape lobe index) = SL'/SW" 
+         },
+         {  "defs": ["PPI"],
+            "text": "(postpetiolar index) = PPW/HW" 
+         }
+    ]
+}
