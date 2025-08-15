@@ -286,7 +286,6 @@ class StaticGenerator:
 
     def _prepare_description(self, description) -> Tuple[str, List[str]]:
         description_defs_list = self.data_loader.get_all_defs()
-        description_defs_list = sorted(description_defs_list, key=lambda x: (-len(x), x))
         ret_descr = description
         ret_keywords = []
 
@@ -603,7 +602,7 @@ class StaticGenerator:
                 for item in def_keys:
                     if item not in keywords_list:
                         keywords_list.append(item)
-        keywords_list = sorted(list(set(keywords_list)))
+        keywords_list = sorted(list(set(keywords_list)), key=lambda x: x.lower())
         return keywords_list
 
 
@@ -625,15 +624,18 @@ def get_path_components(path, level):
     return ret
 
 
-def find_all_defs(content, def_list: List[str]) -> List[Tuple[int, str]]:
-    content_low = content.lower()
+def find_all_defs(content, def_list: List[Any]) -> List[Tuple[int, str]]:
     palces_list = []
     for def_item in def_list:
-        places = find_all(content_low, def_item)
+        def_key, def_match = def_item
+        item_content = content
+        if def_match is False:
+            item_content = content.lower()
+        places = find_all(item_content, def_key)
         if not places:
             continue
         for pos in places:
-            palces_list.append((pos, def_item))
+            palces_list.append((pos, def_key))
 
     ret_list = []
     recent_end = -1

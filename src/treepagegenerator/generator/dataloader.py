@@ -217,6 +217,7 @@ class DataLoader:
                     defs_list.append(defs_data)
 
                 for defs_dict in defs_list:
+                    casesensitive = defs_dict.get("casesensitive", False)
                     description_content = defs_dict.get("description")
                     def_items = defs_dict["items"]
                     for item in def_items:
@@ -226,15 +227,13 @@ class DataLoader:
                             if not os.path.isfile(image_path):
                                 _LOGGER.error("could not find image in defs file: %s", defs_file_path)
                             item["image"] = image_path
+                        if "casesensitive" not in item:
+                            item["casesensitive"] = casesensitive
                         if "description" not in item:
                             item["description"] = description_content
                     ret_list.append(defs_dict)
 
         return ret_list
-
-    # def get_page_title(self):
-    #     page_title = self.config_dict.get("page_title", "")
-    #     return self.get_translation(page_title)
 
     # def get_translation(self, key: str, group: str = None) -> str:
     #     return get_translation(self.translation_dict, key, group)
@@ -289,13 +288,17 @@ class DataLoader:
         defs_set = set()
         for item in self.defs_list:
             defs = item.get("defs", [])
+            item_casesensitive = item.get("casesensitive", False)
+            defs = [ (item, item_casesensitive) for item in defs ]
             defs_set.update(defs)
             def_items = item.get("items")
             for def_item in def_items:
                 item_defs = def_item.get("defs", [])
-                defs_set.update(item_defs)
+                def_item_casesensitive = def_item.get("casesensitive", item_casesensitive)
+                item_defs = [ (item, def_item_casesensitive) for item in item_defs ]
+                defs_set.update( item_defs )
         defs_list = list(defs_set)
-        defs_list.sort()
+        defs_list = sorted(defs_list, key=lambda xtuple: (-len(xtuple[0]), *xtuple))
         return defs_list
 
     ## key: keyword

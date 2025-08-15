@@ -1,10 +1,11 @@
 {
+    "casesensitive": true,
     "description": "<i>Wilson, E. O. 1955. A monographic revision of the ant genus Lasius. Bulletin of the Museum of Comparative Zoology.</i>",
     "items": [
-        {  "defs": ["c1"],
+        {  "defs": ["C1"],
            "text": "Cephalic index (CI): Head width x 100 / Head length"
         },
-        {  "defs": ["hw"],
+        {  "defs": ["HW"],
            "text": "Head width (HW): Workers and queen: the maximum width of the head held in perfect full face and excluding the eyes. If the eyes extent beyond the lateral borders of the head in this position, the measurement is taken across whatever part of the lateral borders are left exposed. Male: the maximum width of the head across and including the eyes."
         }
     ]
