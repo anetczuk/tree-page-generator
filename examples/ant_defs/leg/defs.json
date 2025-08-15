@@ -2,6 +2,6 @@
     "defs": ["coxa", "femur", "femurs", "femora", "pre-tarsus", "tarsus", "tibiae", "trochanter"],
     "items": [
      {  "image": "images.jpeg",
-        "description": "<a href='https://ijcrt.org/papers/IJCRT2303592.pdf'>Morphological description of Ants identified in Tumkur University campus, Tumakuru</a>" }
+        "description": "<i><a href='https://ijcrt.org/papers/IJCRT2303592.pdf'>Morphological description of Ants identified in Tumkur University campus, Tumakuru</a></i>" }
     ]
 }

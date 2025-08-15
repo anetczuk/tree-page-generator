@@ -290,8 +290,7 @@ class StaticGenerator:
         ret_descr = description
         ret_keywords = []
 
-        desc_low = description.lower()
-        places = find_all_defs(desc_low, description_defs_list)
+        places = find_all_defs(description, description_defs_list)
         places = sorted(places, key=lambda x: (x[0], -len(x[1])))
         places.reverse()
         for palce_item in places:
@@ -531,24 +530,25 @@ class StaticGenerator:
         for item_id, desc_list in model_data.items():
             item_keys = []
             for val in desc_list:
-                value = val.get("description")
-                _desc, desc_keys = self._prepare_description(value)
+                desc_text = val.get("description")
+                _desc, desc_keys = self._prepare_description(desc_text)
                 item_keys.extend(desc_keys)
             model_item_keys[item_id] = item_keys
+
+        keywords_list = self._append_keywords_in_defs(keywords_list)
 
         defs_dict = self.data_loader.get_defs_dict()
         keywords_content = ""
         keywords_content += """<table>\n"""
         keywords_content += """<tr class="title_row"> <td colspan="2">Keywords:</td> </tr>\n"""
         for keyword in keywords_list:
-            single_keyword_content = ""
-            single_keyword_content += (
+            single_keyword_content = (
                 f"""<tr class="def_row"> <td class="def_item"><a name="{keyword}"></a>{keyword}</td> """
             )
-            keyword_data_list = defs_dict[keyword]
             single_keyword_content += """<td> """
 
-            keyword_item_content = ""
+            keyword_data_list = defs_dict[keyword]
+            keyword_defs_content = ""
             for keyword_item in keyword_data_list:
                 def_text = keyword_item.get("text")
                 img_rel_path = None
@@ -557,33 +557,54 @@ class StaticGenerator:
                     dest_img_path = self.get_def_photo_path(photo_path)
                     img_rel_path = os.path.relpath(dest_img_path, page_dir)
                 description_content = keyword_item.get("description")
-                keyword_item_content += """<div class="imgtile">\n"""
+                keyword_defs_content = """<div class="imgtile">\n"""
                 if def_text:
-                    keyword_item_content += f"""    <div>{def_text}</div>\n"""
+                    def_text, _def_keys = self._prepare_description(def_text)
+                    keyword_defs_content += f"""    <div>{def_text}</div>\n"""
                 if img_rel_path:
-                    keyword_item_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
+                    keyword_defs_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
                 if description_content:
-                    keyword_item_content += f"""    <div>{description_content}</div>\n"""
-                keyword_item_content += """</div>\n"""
+                    keyword_defs_content += f"""    <div>{description_content}</div>\n"""
+                keyword_defs_content += """</div>\n"""
 
-            if keyword_item_content:
-                items_list = []
+            # ## prepare "mentioned" content
+            if keyword_defs_content:
+                single_keyword_content += keyword_defs_content
+
+                mentioned_list = []
                 for item_id, item_desc_keys in model_item_keys.items():
                     if keyword in item_desc_keys:
                         item_path = os.path.join(self.out_page_dir, f"{item_id}.html")
                         item_rel_path = os.path.relpath(item_path, page_dir)
                         item_link = f"""<a href="{item_rel_path}">{item_id}</a>"""
-                        items_list.append(item_link)
-                if items_list:
-                    items_str = " ".join(items_list)
-                    keyword_item_content += f"""<div>Mentioned in: {items_str}</div>\n"""
-                    single_keyword_content += keyword_item_content
-                    single_keyword_content += """ </td> """
-                    single_keyword_content += """</tr>\n"""
-                    keywords_content += single_keyword_content
+                        mentioned_list.append(item_link)
+                if mentioned_list:
+                    items_str = " ".join(mentioned_list)
+                    single_keyword_content += f"""<div>Mentioned in: {items_str}</div>\n"""
+
+                single_keyword_content += """ </td> </tr>\n"""
+                keywords_content += single_keyword_content
 
         keywords_content += """</table>\n"""
         return keywords_content
+
+    def _append_keywords_in_defs(self, keywords_list):
+        defs_dict = self.data_loader.get_defs_dict()
+        counter = 0
+        while counter < len(keywords_list):
+            keyword = keywords_list[counter]
+            counter += 1
+            keyword_data_list = defs_dict[keyword]
+            for keyword_item in keyword_data_list:
+                def_text = keyword_item.get("text")
+                if not def_text:
+                    continue
+                _def_desc, def_keys = self._prepare_description(def_text)
+                for item in def_keys:
+                    if item not in keywords_list:
+                        keywords_list.append(item)
+        keywords_list = sorted(list(set(keywords_list)))
+        return keywords_list
 
 
 ## ===========================================================================================
@@ -605,10 +626,10 @@ def get_path_components(path, level):
 
 
 def find_all_defs(content, def_list: List[str]) -> List[Tuple[int, str]]:
+    content_low = content.lower()
     palces_list = []
     for def_item in def_list:
-        desc_low = content.lower()
-        places = find_all(desc_low, def_item)
+        places = find_all(content_low, def_item)
         if not places:
             continue
         for pos in places:
@@ -628,15 +649,32 @@ def find_all_defs(content, def_list: List[str]) -> List[Tuple[int, str]]:
     return ret_list
 
 
-def find_all(content, substring) -> List[int]:
+def find_all(content, substring, match_subword=False) -> List[int]:
     ret_list = []
+    content_endpos = len(content)
+    substr_len = len(substring)
     pos = 0
     while True:
         new_pos = content.find(substring, pos)
         if new_pos < 0:
             break
-        ret_list.append(new_pos)
         pos = new_pos + 1
+        if match_subword:
+            ret_list.append(new_pos)
+            continue
+        ## additional match
+        if new_pos > 0:
+            prev_char = content[new_pos - 1]
+            if prev_char.isalpha():
+                ## middle of word - skip
+                continue
+        new_after_endpos = new_pos + substr_len
+        if new_after_endpos < content_endpos:
+            next_char = content[new_after_endpos]
+            if next_char.isalpha():
+                ## middle of word - skip
+                continue
+        ret_list.append(new_pos)
     return ret_list
 
 

@@ -299,7 +299,7 @@ class DataLoader:
         return defs_list
 
     ## key: keyword
-    ## value:
+    ## value: List[Any]
     def get_defs_dict(self) -> Dict[str, Any]:
         if not self.defs_list:
             return {}

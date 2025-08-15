@@ -1,6 +1,6 @@
 [
     {
-        "description": "<a href='https://www.antwiki.org/wiki/Morphological_Terms'>Morphological Terms</a>, via AntWiki",
+        "description": "<i><a href='https://www.antwiki.org/wiki/Morphological_Terms'>Morphological Terms</a>, via AntWiki</i>",
         "items": [
              {  "defs": ["dorsal", "dorsum"],
                 "text": "Referring to the dorsum or upper surface; opposite is ventral." 
@@ -20,7 +20,7 @@
         ]
     },
     {
-        "description": "<a href='https://www.antwiki.org/wiki/Morphological_Terms/Worker_Head'>Morphological Terms/Worker Head</a>, via AntWiki",
+        "description": "<i><a href='https://www.antwiki.org/wiki/Morphological_Terms/Worker_Head'>Morphological Terms/Worker Head</a>, via AntWiki</i>",
         "items": [
              {  "defs": ["frontal carina", "frontal carinae", "carina", "carinae"],
                 "text": "Singular: Frontal carina. A pair of longitudinal cuticular ridges or flanges on the head, located dorsally behind the clypeus and between the antennal sockets. They are very variable in length and strength of development in the various ant taxa, frequently being short and simple but sometimes extending back to the posterior margin of the head. In some groups the frontal carinae are vestigial or absent, but elsewhere they may be very strongly developed or form the dorsal margins of extensive antennal scrobes. In many groups the frontal carinae anteriorly, especially between the antennal sockets, are expanded into laterally projecting lobate extensions, the frontal lobes, which overhang and partially to entirely conceal the antennal sockets themselves. Frontal lobes may be the only expression of the frontal carinae in some groups. Sometimes the portion of the torulus closest to the cephalic midline is also raised and expanded into a small lobe that projects laterally. This may be visible below the frontal lobe, or be fused to the frontal lobe." 

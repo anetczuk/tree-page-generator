@@ -6,6 +6,6 @@
              "katepisternum", "anepisternum", "metathoracic spiracle"],
     "items": [
      {  "image": "Scheme_ant_worker_anatomy-en.png",
-        "description": "<a href='https://en.wikipedia.org/wiki/File:Scheme_ant_worker_anatomy-en.svg'>Source</a>, via Wikipedia" }
+        "description": "<i><a href='https://en.wikipedia.org/wiki/File:Scheme_ant_worker_anatomy-en.svg'>Source</a>, via Wikipedia</i>" }
     ]
 }

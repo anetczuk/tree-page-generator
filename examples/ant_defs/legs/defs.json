@@ -2,6 +2,6 @@
     "defs": ["hind tibia", "tibia", "femur", "femurs", "femora", "tarsus", "tibial spurs"],
     "items": [
      {  "image": "hindlegshape.jpg",
-        "description": "<a href='https://keys.lucidcentral.org/keys/v3/aus_museum/flower_chafers/key/Cetoniinae/Media/Html/hindtibiaeshape.htm'>Hind tibiae - Shape</a>, via FaunaNet Flower Chafers of New South Wales" }
+        "description": "<i><a href='https://keys.lucidcentral.org/keys/v3/aus_museum/flower_chafers/key/Cetoniinae/Media/Html/hindtibiaeshape.htm'>Hind tibiae - Shape</a>, via FaunaNet Flower Chafers of New South Wales</i>" }
     ]
 }

@@ -4,6 +4,6 @@
              "ocelli", "spiracle", "sting", "tarsi", "tibia"],
     "items": [
      {  "image": "ant-anatomy-2022-final.jpg",
-        "description": "<a href='https://blog.myrmecologicalnews.org/2022/08/17/ant-anatomy/'>Ant anatomy (ant morphology)</a>, via Myrmecological News Blog" }
+        "description": "<i><a href='https://blog.myrmecologicalnews.org/2022/08/17/ant-anatomy/'>Ant anatomy (ant morphology)</a>, via Myrmecological News Blog</i>" }
     ]
 }
