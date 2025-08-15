@@ -1,7 +1,7 @@
 {
-    "defs": ["antenna", "antennal scrobe", "antennal socket", "antennal sockets", "carina", "clypeal", "clypeus", 
+    "defs": ["antenna", "antennal scrobe", "antennal socket", "antennal sockets", "clypeal", "clypeus", 
              "compound eye", "compound eyes", "eye", "eyes",  
-             "frontal carina", "frontal carinae", "carina", "frontal lobe", "lobe", "funiculus", "mandible", "ocelli", 
+             "frontal carina", "frontal carinae", "carina", "carinae", "frontal lobe", "lobe", "funiculus", "mandible", "ocelli", 
              "scape", "antennal scape" ],
     "items": [
      {  "image": "500px-GlossaryAntFrontHead.jpg",

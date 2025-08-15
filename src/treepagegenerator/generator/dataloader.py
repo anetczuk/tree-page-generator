@@ -191,7 +191,7 @@ class DataLoader:
 
         defs_dirs = self.config_dict["defs_dirs"]
         config_dir = os.path.dirname(self.config_path)
-        for defs_dir in defs_dirs:
+        for defs_dir in defs_dirs:  # pylint: disable=R1702
             defs_path = os.path.join(config_dir, defs_dir)
             if not os.path.isdir(defs_path):
                 continue
@@ -204,22 +204,30 @@ class DataLoader:
                     continue
                 try:
                     with open(defs_file_path, "r", encoding="utf8") as fp:
-                        defs_dict = json.load(fp)
+                        defs_data = json.load(fp)
                 except Exception:
                     _LOGGER.error("unable to load JSON file: %s", defs_file_path)
                     raise
-                description_content = defs_dict.get("description")
-                def_items = defs_dict["items"]
-                for item in def_items:
-                    image_path = item.get("image")
-                    if image_path:
-                        image_path = os.path.join(defs_dir_path, image_path)
-                        if not os.path.isfile(image_path):
-                            _LOGGER.error("could not find image in defs file: %s", defs_file_path)
-                        item["image"] = image_path
-                    if "description" not in item:
-                        item["description"] = description_content
-                ret_list.append(defs_dict)
+
+                defs_list = []
+                if isinstance(defs_data, list):
+                    defs_list = defs_data
+                else:
+                    defs_list.append(defs_data)
+
+                for defs_dict in defs_list:
+                    description_content = defs_dict.get("description")
+                    def_items = defs_dict["items"]
+                    for item in def_items:
+                        image_path = item.get("image")
+                        if image_path:
+                            image_path = os.path.join(defs_dir_path, image_path)
+                            if not os.path.isfile(image_path):
+                                _LOGGER.error("could not find image in defs file: %s", defs_file_path)
+                            item["image"] = image_path
+                        if "description" not in item:
+                            item["description"] = description_content
+                    ret_list.append(defs_dict)
 
         return ret_list
 

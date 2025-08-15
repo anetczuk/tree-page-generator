@@ -95,7 +95,9 @@ class StaticGenerator:
         page_title = self.data_loader.get_model_title()
         model_desc = self.data_loader.get_model_description()
 
-        content = f"""\
+        ## main/index page
+        content = ""
+        content += f"""\
 <html>
 {HTML_LICENSE}
 
@@ -105,9 +107,9 @@ class StaticGenerator:
 </head>
 
 <body>
-<div class="main_section title">
-{page_title}
-</div>
+
+    <div class="main_section title">{page_title}</div>
+
 <div class="main_section description">
 {model_desc}
 </div>
@@ -142,6 +144,7 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
+        ## characteristic page
         content = ""
         content += f"""\
 <html>
@@ -154,21 +157,12 @@ class StaticGenerator:
 
 <body>
 
+    <div class="main_section title">{page_title}</div>
+
 """
 
-        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_page_dir)
-        prev_content = "<div> Back to: "
-        link_list = [f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""]
-
-        nav_dict = self.data_loader.nav_dict
-        prev_items = nav_dict.prev_id_list(item_id)
-        if prev_items:
-            for prev in prev_items:
-                item = f"""<a href="{prev}.html">{prev}</a>"""
-                link_list.append(item)
-
-        prev_content += " | ".join(link_list)
-        prev_content += "</div>"
+        ## generate content
+        prev_content = self._prepare_back_to(self.out_page_dir, item_id)
         content += prev_content
 
         page_content = self._generate_page_content(item_id, desc_list)
@@ -189,17 +183,8 @@ class StaticGenerator:
 
         content = ""
 
-        data_graph = generate_graph(self.data_loader, item_id)
-        svg_content = get_graph_svg(data_graph)
-
-        ## remove defined 'width' and 'height' - attributes corrupts image placement
-        svg_content = re.sub(r'<svg\s+width="\d+\S+"\s+height="\d+\S+"', "<svg", svg_content)
-
-        content += f"""
-<div class="graph_content">
-    {svg_content}
-</div>
-"""
+        graph_content = self._prepare_tree_graph(item_id)
+        content += graph_content
 
         content += """<div>\n"""
         content += """<table>\n"""
@@ -327,6 +312,7 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
+        ## species list page
         content = ""
         content += f"""\
 <html>
@@ -339,13 +325,12 @@ class StaticGenerator:
 
 <body>
 
+    <div class="main_section title">{page_title}</div>
+
 """
 
         ## generate content
-        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_root_dir)
-        prev_content = "<div> Back to: "
-        prev_content += f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""
-        prev_content += "</div>"
+        prev_content = self._prepare_back_to(self.out_root_dir)
         content += prev_content
 
         content += "</br>"
@@ -386,6 +371,7 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
+        ## species page
         content = ""
         content += f"""\
 <html>
@@ -398,26 +384,18 @@ class StaticGenerator:
 
 <body>
 
+    <div class="main_section title">{page_title}</div>
+
 """
 
         ## generate content
-        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_page_dir)
-        prev_content = "<div> Back to: "
-        prev_content += f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""
-        prev_content += "</div>"
+        prev_content = self._prepare_back_to(self.out_page_dir, species_id)
         content += prev_content
 
-        data_graph = generate_graph(self.data_loader, species_id)
-        svg_content = get_graph_svg(data_graph)
-        content += f"""
-<div class="graph_content">
-    {svg_content}
-</div>
-"""
+        graph_content = self._prepare_tree_graph(species_id)
+        content += graph_content
 
-        content += "</br>"
-
-        content += f"""<div><b>{species_name}</b>:</div>"""
+        content += f"""<div class="title_row main_section">{species_name}</div>"""
         info_url = species_target[1]
         if info_url:
             content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>"""
@@ -456,11 +434,25 @@ class StaticGenerator:
         write_data(page_path, content)
         return page_path
 
+    def _prepare_tree_graph(self, active_item_id):
+        data_graph = generate_graph(self.data_loader, active_item_id)
+        svg_content = get_graph_svg(data_graph)
+
+        ## remove defined 'width' and 'height' - attributes corrupts image placement
+        svg_content = re.sub(r'<svg\s+width="\d+\S+"\s+height="\d+\S+"', "<svg", svg_content)
+
+        return f"""
+<div class="graph_content">
+    {svg_content}
+</div>
+"""
+
     def _generate_defs_page(self):
         page_path = os.path.join(self.out_root_dir, "dictionary.html")
 
         page_title = self.data_loader.get_model_title()
 
+        ## dictionary page
         content = ""
         content += f"""\
 <html>
@@ -473,13 +465,12 @@ class StaticGenerator:
 
 <body>
 
+    <div class="main_section title">{page_title}</div>
+
 """
 
         ## generate content
-        main_page_rel_path = os.path.relpath(self.out_index_path, self.out_root_dir)
-        prev_content = "<div> Back to: "
-        prev_content += f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""
-        prev_content += "</div>"
+        prev_content = self._prepare_back_to(self.out_root_dir)
         content += prev_content
 
         content += "</br>"
@@ -511,6 +502,23 @@ class StaticGenerator:
 """
         write_data(page_path, content)
         return page_path
+
+    def _prepare_back_to(self, subpage_dir, item_id=None):
+        main_page_rel_path = os.path.relpath(self.out_index_path, subpage_dir)
+        prev_content = """<div class="main_section"> Back to: """
+        link_list = [f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""]
+
+        if item_id:
+            nav_dict = self.data_loader.nav_dict
+            prev_items = nav_dict.prev_id_list(item_id)
+            if prev_items:
+                for prev in prev_items:
+                    item = f"""<a href="{prev}.html">{prev}</a>"""
+                    link_list.append(item)
+
+        prev_content += " | ".join(link_list)
+        prev_content += "</div>"
+        return prev_content
 
     def _prepare_defs_table(self, keywords_list, page_dir):
         if not keywords_list:
