@@ -72,9 +72,9 @@ td {
     margin-top: 32px;
 }
 
-.graph_content {
+.graph_section {
     padding-top: 32px;
 }
-.graph_content svg {
+.graph_section svg {
     width: 100%;
 }

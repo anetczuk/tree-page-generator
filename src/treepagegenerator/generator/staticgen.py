@@ -114,17 +114,19 @@ class StaticGenerator:
         ## main/index page
         content = ""
         content += f"""\
+<!DOCTYPE html>
 <html>
 {HTML_LICENSE}
 
 <head>
     <title>{page_title}</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <body>
 
-    <div class="main_section title">{page_title}</div>
+<div class="main_section title">{page_title}</div>
 
 <div class="main_section description">
 {model_desc}
@@ -163,23 +165,25 @@ class StaticGenerator:
         ## characteristic page
         content = ""
         content += f"""\
+<!DOCTYPE html>
 <html>
 {HTML_LICENSE}
 
 <head>
     <title>{page_title} - characteristics</title>
     <link rel="stylesheet" type="text/css" href="../styles.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <body>
 
-    <div class="main_section title">{page_title}</div>
+<div class="main_section title">{page_title}</div>
 
 """
 
         ## generate content
         prev_content = self._prepare_back_to(self.out_page_dir, item_id)
-        content += prev_content
+        content += prev_content + "\n"
 
         page_content = self._generate_subpage_content(item_id, desc_list)
         content += page_content
@@ -202,57 +206,62 @@ class StaticGenerator:
         graph_content = self._prepare_tree_graph(item_id)
         content += graph_content
 
-        content += """<div>\n"""
-        content += """<table>\n"""
-        content += "<tr> " + "<th></th> " * columns_num + "</tr>\n" ""
+        content += """\n<div class="characteristic_section">\n"""
+        table_content = """<table>\n"""
 
         ## title row
-        content += f"""<tr class="title_row"> <td colspan="{columns_num}">Characteristic {item_id}:</td> </tr>\n"""
+        table_content += (
+            f"""<tr class="title_row"> <th colspan="{columns_num}">Characteristic {item_id}:</th> </tr>\n"""
+        )
 
         ## description row
         char_keywords = set()
-        content += "<tr>"
+        table_content += "<tr>"
         for val in desc_list:
             value = val.get("description")
             desc, desc_keys = self._prepare_description(value)
             char_keywords.update(desc_keys)
-            content += f"""\n   <td>{desc}</td>"""
-        content += "</tr>\n"
+            table_content += f"""\n   <td>{desc}</td>"""
+        table_content += "\n</tr>\n"
 
         ## "next" row
-        content += """<tr class="navigation_row"> """
+        table_content += """<tr class="navigation_row"> """
         for val in desc_list:
             next_id = val.get("next")
             if next_id:
                 next_data = f"""<a href="{next_id}.html" class="next_char">next: {next_id}</a>"""
-                content += f"""<td>{next_data}</td> """
+                table_content += f"""<td>{next_data}</td> """
             else:
                 target = val.get("target")
                 if target:
                     target_label = target[0]
                     item_low = prepare_filename(target_label)
                     next_data = f"""<a href="{item_low}.html" class="next_char">{target_label}</a>"""
-                    content += f"""<td>{next_data}</td> """
+                    table_content += f"""<td>{next_data}</td> """
                 else:
-                    content += """<td>--- unknown ---</td> """
-        content += "</tr>\n"
+                    table_content += """<td>--- unknown ---</td> """
+        table_content += "</tr>\n"
 
         ## potential species row
         potential_content = self._prepare_potential_species(desc_list)
         if potential_content:
-            content += potential_content
+            table_content += potential_content
 
-        content += """</table>\n"""
-        content += """</div>\n"""
+        table_content += """</table>\n"""
+        table_content = table_content.replace("\n", "\n    ")
+        table_content = table_content.strip()
+        table_content = "    " + table_content
+        content += table_content
+        content += """\n</div>\n"""
 
         ## keywords row
         if char_keywords:
             keywords_list = list(char_keywords)
             keywords_list.sort()
 
-            content += """<div>\n"""
+            content += """\n<div class="keywords_section">\n"""
             content += self._prepare_defs_table(keywords_list, self.out_page_dir)
-            content += """</div>\n"""
+            content += """\n</div>\n"""
 
         return content
 
@@ -267,7 +276,7 @@ class StaticGenerator:
 
         potential_content = ""
         potential_content += f"""<tr class="title_row"> <td colspan="{columns_num}">Potential species:</td> </tr>\n"""
-        potential_content += """<tr class="species_row"> """
+        potential_content += """<tr class="species_row">"""
         potential_species_dict = self.data_loader.potential_species
         found_potential = False
         for val in desc_list:
@@ -286,15 +295,15 @@ class StaticGenerator:
                 for item in next_species:
                     item_low = prepare_filename(item)
                     a_href = f"""<a href="{item_low}.html">{item}</a>"""
-                    list_content.append(f"<li>{a_href}</li>\n")
-                list_content.append("</ul>\n")
+                    list_content.append(f"        <li>{a_href}</li>\n")
+                list_content.append("        </ul>")
                 list_str = "".join(list_content)
-                potential_content += f"""<td>{list_str}</td> """
+                potential_content += f"""\n    <td>{list_str}\n    </td>"""
                 continue
 
             ## no species found
             potential_content += """<td></td> """
-        potential_content += "</tr>\n"
+        potential_content += "\n</tr>\n"
 
         if found_potential:
             return potential_content
@@ -329,27 +338,27 @@ class StaticGenerator:
         ## species list page
         content = ""
         content += f"""\
+<!DOCTYPE html>
 <html>
 {HTML_LICENSE}
 
 <head>
     <title>{page_title} - species</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <body>
 
-    <div class="main_section title">{page_title}</div>
+<div class="main_section title">{page_title}</div>
 
 """
 
         ## generate content
         prev_content = self._prepare_back_to(self.out_root_dir)
-        content += prev_content
+        content += prev_content + "\n"
 
-        content += "</br>"
-
-        content += "<div>List of species included in the key:</div>"
+        content += """\n<div class="main_section">List of species included in the key:</div>\n"""
 
         species_set = set()
         potential_species_dict = self.data_loader.potential_species
@@ -358,11 +367,11 @@ class StaticGenerator:
         species_list = list(species_set)
         species_list.sort()
 
-        list_content = ["<ul>\n"]
+        list_content = ["""\n<ul class="species_list">\n"""]
         for species in species_list:
             item_low = prepare_filename(species)
             a_href = f"""<a href="page/{item_low}.html">{species}</a>"""
-            list_content.append(f"<li>{a_href}</li>\n")
+            list_content.append(f"    <li>{a_href}</li>\n")
         list_content.append("</ul>\n")
         list_str = "".join(list_content)
         content += list_str
@@ -388,38 +397,40 @@ class StaticGenerator:
         ## species page
         content = ""
         content += f"""\
+<!DOCTYPE html>
 <html>
 {HTML_LICENSE}
 
 <head>
     <title>{page_title} - {species_name}</title>
     <link rel="stylesheet" type="text/css" href="../styles.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <body>
 
-    <div class="main_section title">{page_title}</div>
+<div class="main_section title">{page_title}</div>
 
 """
 
         ## generate content
         prev_content = self._prepare_back_to(self.out_page_dir, species_id)
-        content += prev_content
+        content += prev_content + "\n"
 
         graph_content = self._prepare_tree_graph(species_id)
         content += graph_content
 
-        content += f"""<div class="title_row main_section">{species_name}</div>"""
+        content += f"""\n<div class="title_row main_section">{species_name}</div>\n"""
         info_url = species_target[1]
         if info_url:
-            content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>"""
+            content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>\n"""
 
         model = self.data_loader.model_data
         model_data: Dict[str, Any] = model.get("data", {})
 
         ## characteristics list
         char_keywords = set()
-        content += "<ul>\n"
+        content += """<ul class="characteristic_list">\n"""
         for prev_item in prev_list:
             prev_id = prev_item[0]
             prev_data = model_data[prev_id]
@@ -437,9 +448,9 @@ class StaticGenerator:
             keywords_list = list(char_keywords)
             keywords_list.sort()
 
-            content += """<div>\n"""
+            content += """\n<div class="keywords_section">\n"""
             content += self._prepare_defs_table(keywords_list, self.out_page_dir)
-            content += """</div>\n"""
+            content += """\n</div>\n"""
 
         content += """
 </body>
@@ -454,10 +465,13 @@ class StaticGenerator:
 
         ## remove defined 'width' and 'height' - attributes corrupts image placement
         svg_content = re.sub(r'<svg\s+width="\d+\S+"\s+height="\d+\S+"', "<svg", svg_content)
+        svg_content = svg_content.replace("\n", "\n    ")
+        svg_content = svg_content.strip()
+        svg_content = "    " + svg_content
 
         return f"""
-<div class="graph_content">
-    {svg_content}
+<div class="graph_section">
+{svg_content}
 </div>
 """
 
@@ -469,27 +483,29 @@ class StaticGenerator:
         ## dictionary page
         content = ""
         content += f"""\
+<!DOCTYPE html>
 <html>
 {HTML_LICENSE}
 
 <head>
     <title>{page_title} - dictionary</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <body>
 
-    <div class="main_section title">{page_title}</div>
+<div class="main_section title">{page_title}</div>
 
 """
 
         ## generate content
         prev_content = self._prepare_back_to(self.out_root_dir)
-        content += prev_content
+        content += prev_content + "\n"
 
-        content += "</br>"
-
-        content += "<div>Explanation of some definitions used in the characteristics.</div>"
+        content += (
+            """\n<div class="main_section">Explanation of some definitions used in the characteristics.</div>\n"""
+        )
 
         defs_dict = self.data_loader.get_defs_dict()
         keywords_list = list(defs_dict.keys())
@@ -506,9 +522,9 @@ class StaticGenerator:
 
         keywords_content = self._prepare_defs_table(keywords_list, self.out_root_dir)
         if keywords_content:
-            content += """<div>\n"""
+            content += """\n<div class="keywords_section">\n"""
             content += keywords_content
-            content += """</div>\n"""
+            content += """\n</div>\n"""
 
         content += """
 </body>
@@ -519,7 +535,7 @@ class StaticGenerator:
 
     def _prepare_back_to(self, subpage_dir, item_id=None):
         main_page_rel_path = os.path.relpath(self.out_index_path, subpage_dir)
-        prev_content = """<div class="main_section"> Back to: """
+        prev_content = """<div class="main_section">Back to: """
         link_list = [f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""]
 
         if item_id:
@@ -555,12 +571,11 @@ class StaticGenerator:
         defs_dict = self.data_loader.get_defs_dict()
         keywords_content = ""
         keywords_content += """<table>\n"""
-        keywords_content += """<tr class="title_row"> <td colspan="2">Keywords:</td> </tr>\n"""
+        keywords_content += """<tr class="title_row"> <th colspan="2">Keywords:</th> </tr>\n"""
         for keyword in keywords_list:
-            single_keyword_content = (
-                f"""<tr class="def_row"> <td class="def_item"><a name="{keyword}"></a>{keyword}</td> """
-            )
-            single_keyword_content += """<td> """
+            single_keyword_content = f"""<tr class="def_row">
+    <td class="def_item"><a name="{keyword}"></a>{keyword}</td>\n"""
+            single_keyword_content += """    <td> """
 
             keyword_data_list = defs_dict[keyword]
             keyword_defs_content = ""
@@ -575,12 +590,12 @@ class StaticGenerator:
                 keyword_defs_content = """<div class="imgtile">\n"""
                 if def_text:
                     def_text, _def_keys = self._prepare_description(def_text)
-                    keyword_defs_content += f"""    <div>{def_text}</div>\n"""
+                    keyword_defs_content += f"""         <div>{def_text}</div>\n"""
                 if img_rel_path:
-                    keyword_defs_content += f"""    <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
+                    keyword_defs_content += f"""         <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
                 if description_content:
-                    keyword_defs_content += f"""    <div>{description_content}</div>\n"""
-                keyword_defs_content += """</div>\n"""
+                    keyword_defs_content += f"""         <div>{description_content}</div>\n"""
+                keyword_defs_content += """         </div>\n"""
 
             # ## prepare "mentioned" content
             if keyword_defs_content:
@@ -595,12 +610,17 @@ class StaticGenerator:
                         mentioned_list.append(item_link)
                 if mentioned_list:
                     items_str = " ".join(mentioned_list)
-                    single_keyword_content += f"""<div>Mentioned in: {items_str}</div>\n"""
+                    single_keyword_content += f"""         <div>Mentioned in: {items_str}</div>\n"""
 
-                single_keyword_content += """ </td> </tr>\n"""
+                single_keyword_content += """    </td>\n</tr>\n"""
                 keywords_content += single_keyword_content
 
         keywords_content += """</table>\n"""
+
+        keywords_content = keywords_content.replace("\n", "\n    ")
+        keywords_content = keywords_content.strip()
+        keywords_content = "    " + keywords_content
+
         return keywords_content
 
     def _append_keywords_in_defs(self, keywords_list):
