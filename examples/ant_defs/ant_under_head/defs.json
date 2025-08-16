@@ -1,5 +1,5 @@
 {
-    "defs": ["hypostoma", "labial palp", "maxillary palp", "palps"],
+    "defs": ["hypostoma", "labial palp", "maxillary palp", "maxillary palpes", "palps", "palpes"],
     "items": [
      {  "image": "GlossaryAntUnderHead.jpg",
         "description": "<i><a href='https://www.antwiki.org/wiki/Morphological_Terms/Worker_Head'>Morphological Terms/Worker Head</a>, via AntWiki</i>" }

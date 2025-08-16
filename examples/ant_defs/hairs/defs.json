@@ -1,7 +1,8 @@
 {
     "defs": ["erect", "suberect", "subdecumbent", "decumbent", "appressed", "decumbent hairs", "pilosity"],
     "items": [
-     {  "image": "hairs.png",
-        "description": "<i><a href='https://blog-rkp.kellerperez.com/tag/myrmecia-brevinoda/'>Homology Weekly: Metapleural Gland</a>, Scanning Electron Micrograph, Roberto Keller/AMNH</i>" }
+         {  "image": "hairs.png",
+            "description": "<i>Wilson, E. O. 1955. A monographic revision of the ant genus Lasius. Bulletin of the Museum of Comparative Zoology.</i>"
+         }
     ]
 }

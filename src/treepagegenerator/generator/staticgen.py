@@ -719,6 +719,9 @@ def find_all(content, substring, match_subword=False) -> List[int]:
 def prepare_filename(name: str):
     name = name.lower()
     name = re.sub(r"\s+", "_", name)
+    # name = name.replace(".", "_")
+    name = name.replace("(", "_")
+    name = name.replace(")", "_")
     return name
 
 

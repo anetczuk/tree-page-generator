@@ -1,6 +1,6 @@
 {
-    "defs": ["promesonotal suture", "parapsidal line", "transcutal suture", "scutellum", "fastigium", "pronotum", "scutum", 
-             "mesometanotal suture", "metanotum", "cinctus", "tergite", "presternite", "presternite", "helcium", 
+    "defs": ["promesonotal suture", "promesonotal", "parapsidal line", "transcutal suture", "scutellum", "fastigium", "pronotum", "scutum", 
+             "mesometanotal suture", "metanotum", "cinctus", "tergite", "tergites", "presternite", "presternite", "helcium", 
              "sternopostpetiolar process", "cinctus", "clypeus", "nasus"],
     "items": [
      {  "image": "Gyne-P-scabriusculus-Lateral-profile-view-habitus-High-quality-figures-are.png",
