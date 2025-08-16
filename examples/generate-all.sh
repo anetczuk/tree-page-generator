@@ -9,7 +9,7 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 "$SCRIPT_DIR"/key_ant_queen_lasius_wilson/generate.sh
 
-"$SCRIPT_DIR"/key_ant_myrmica_czechowski/generate.sh
+"$SCRIPT_DIR"/antsofpoland_book/key_ant_myrmica_czechowski/generate.sh
 
 
 ## generate small images

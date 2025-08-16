@@ -9,6 +9,7 @@
 
 import os
 from typing import Dict, Any, List
+import argparse
 
 import json
 import re
@@ -48,7 +49,18 @@ digraph data_graph {
 
 
 def main():
-    data_path = f"{SCRIPT_DIR}/raw_key.txt"
+    parser = argparse.ArgumentParser(
+        description="parse raw key",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("-la", "--logall", action="store_true", help="Log all messages")
+    # have to be implemented as parameter instead of command (because access to 'subparsers' object)
+    parser.add_argument("--rawkey", action="store", required=True, help="Path to raw key to parse")
+    parser.add_argument("--outjson", action="store", required=True, help="Path to output model")
+
+    args = parser.parse_args()
+
+    data_path = args.rawkey
     with open(data_path, "r", encoding="utf-8") as file:
         txt_content = file.readlines()
 
@@ -130,7 +142,8 @@ def main():
     model_dict = {"start": first_key, "data": characteristic_list}
 
     json_str = json.dumps(model_dict, indent=4)
-    with open(f"{SCRIPT_DIR}/model.json", "w", encoding="utf-8") as f:
+    model_output_path = args.outjson
+    with open(model_output_path, "w", encoding="utf-8") as f:
         f.write(json_str)
 
     # generate_dot(model_dict)

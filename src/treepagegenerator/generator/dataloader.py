@@ -209,6 +209,7 @@ class DataLoader:
         for defs_dir in defs_dirs:  # pylint: disable=R1702
             defs_path = os.path.join(config_dir, defs_dir)
             if not os.path.isdir(defs_path):
+                _LOGGER.error("invalid 'defs_dirs' path %s in config dict", defs_path)
                 continue
 
             dirs_list = os.listdir(defs_path)

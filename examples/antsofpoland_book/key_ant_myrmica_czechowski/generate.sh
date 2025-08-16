@@ -9,7 +9,9 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 echo "generating data"
 
-"$SCRIPT_DIR"/preparedata_czechowski.py
+MODEL_PATH="$SCRIPT_DIR/model.json"
+
+"$SCRIPT_DIR"/../preparedata_antsofpoland.py --rawkey "${SCRIPT_DIR}"/raw_key.txt --outjson "${MODEL_PATH}"
 
 # dot -Tpng "$SCRIPT_DIR/model_graph.dot" -o "$SCRIPT_DIR/model_graph.png"
 
@@ -21,11 +23,12 @@ OUT_DIR="$SCRIPT_DIR/output"
 rm -fr "$OUT_DIR"
 
 
-cd "$SCRIPT_DIR/../../src/"
+SRC_DIR="${SCRIPT_DIR}/../../../src/"
+
+cd "${SRC_DIR}"
 
 
 CONFIG_PATH="$SCRIPT_DIR/config.json"
-MODEL_PATH="$SCRIPT_DIR/model.json"
 
 
 if [[ $* == *--info* ]]; then
