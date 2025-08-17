@@ -1,0 +1,7 @@
+{
+    "model_dir": "model.json",
+    "defs_dirs": ["../../ant_defs", "../antsofpoland_defs"],
+
+    "title": "Key to species of Formica (workers)",
+    "description": "This key is based on: Wojciech Czechowski, Alexander Radchenko, Wiesława Czechowska. 2002. The ants (Hymenoptera, Formicidae) of Poland"
+}

@@ -1,0 +1,293 @@
+{
+    "start": "1",
+    "data": {
+        "1": [
+            {
+                "description": "Head with strongly concave occipital margin (Plate XV: 1, 2) (subg. Coptoformica Mull.)",
+                "next": "2",
+                "target": null
+            },
+            {
+                "description": "Occipital margin of head straight, convex or, at most, slightly concave (Plates XV: 11, 12; XVI: 1-4)",
+                "next": "5",
+                "target": null
+            }
+        ],
+        "2": [
+            {
+                "description": "Standing hairs present from 4th gastral tergite and from 3rd sternite to apex (Plate XV: 7); maxillary palpes short, usually not reaching to midlength of distance from mouth to occipital hole (Plate XV: 3, 4); occipital and lateral margins of head without standing hairs; eyes without microscopic hairs (to be viewed under magnification not less than 40x) (Plate XV: 1, 3, 4)",
+                "next": "3",
+                "target": null
+            },
+            {
+                "description": "Standing hairs usually present on all gastral segments (Plate XV: 8); maxillary palpes longer, usually surpassing or at least reaching to midlength of distance from mouth to occipital hole (Plate XV: 5, 6)",
+                "next": "4",
+                "target": null
+            }
+        ],
+        "3": [
+            {
+                "description": "Pubescence in ocellar triangle relatively sparce (Plate XV: 9). Distance between appressed hairs on gastral tergites more or less equal to hairs' length",
+                "next": null,
+                "target": [
+                    "Formica pressilabris",
+                    null
+                ]
+            },
+            {
+                "description": "Pubescence in ocellar triangle dense (Plate XV: 10). Distance between appressed hairs on gastral tergites somewhat shorter than hairs' length",
+                "next": null,
+                "target": [
+                    "Formica foreli",
+                    null
+                ]
+            }
+        ],
+        "4": [
+            {
+                "description": "Eyes with distinct microscopic hairs (to be viewed under magnification not less than 40x); occipital corners of head with short standing hairs; maxillary palpes longer, surpassing midlength of distance from mouth to occipital hole (Plate XV: 2, 5)",
+                "next": null,
+                "target": [
+                    "Formica exsecta",
+                    null
+                ]
+            },
+            {
+                "description": "Eyes without microscopic hairs (to be viewed under magnification not less than 40x); occipital corners of head without standing hairs; maxillary palpes shorter, only reaching to midlength of distance from mouth to occipital hole (Plate XV: 6)",
+                "next": null,
+                "target": [
+                    "Formica forsslundi",
+                    null
+                ]
+            }
+        ],
+        "5": [
+            {
+                "description": "Whole body dark brown to black (subg. Serviformica For., parrt.)",
+                "next": "6",
+                "target": null
+            },
+            {
+                "description": "Bicoloured species, with alitrunk red and contrasting with brownish black gaster; alitrunk often with darker patches",
+                "next": "9",
+                "target": null
+            }
+        ],
+        "6": [
+            {
+                "description": "Occipital margin of head and alitrunk dorsum with numerous standing hairs (Plate XV: 11, 13); ventral surface of head with more than 6 standing hairs",
+                "next": null,
+                "target": [
+                    "Formica cinerea (subsp. cinerea)",
+                    null
+                ]
+            },
+            {
+                "description": "Occipital margin of head without standing hairs; alitrunk dorsum without or, at most, with few standing hairs (Plate XV: 12, 14-16); ventral surface of head without or, at most, with 3-4 standing hairs",
+                "next": "7",
+                "target": null
+            }
+        ],
+        "7": [
+            {
+                "description": "Whole body shiny. First gastral tergite with very sparse pubescence, distance between appressed hairs longer than hairs' length (Plate XV: 17). Promesonotal dorsum with long curved standing hairs (Plate XV: 14)",
+                "next": null,
+                "target": [
+                    "Formica candida",
+                    null
+                ]
+            },
+            {
+                "description": "Whole body with dense microsculpture, appears dull; first gastral tergite with dense pubescence, distance between appressed hairs much shorter than hairs' lengih (Plate XV: 18); promesonotal dorsum without or, at most, with short straight standing hairs (Plate XV: 15, 16)",
+                "next": "8",
+                "target": null
+            }
+        ],
+        "8": [
+            {
+                "description": "Femur of foreleg with 2-3 standing hairs on inner margin, femur of middle leg usually without standing hairs, rarely with 1-2 ones near base of femur (Plate XV: 19, 20); promesonotal dorsum usually without standing hairs, rarely with 1-5 hairs only on pronotum (Plate XV: 15)",
+                "next": null,
+                "target": [
+                    "Formica fusca",
+                    null
+                ]
+            },
+            {
+                "description": "Femur of foreleg with 3-12 standing hairs on inner margin, femur of middle leg with 3-7 hairs (Plate XV: 21, 22); promesonotal dorsum with more than 6 standing hairs (Plate XV: 16)",
+                "next": null,
+                "target": [
+                    "Formica lemani",
+                    null
+                ]
+            }
+        ],
+        "9": [
+            {
+                "description": "Anterior clypeal margin distinctly notched medially (Plate XV: 23) (subg. Raptiformica For.)",
+                "next": null,
+                "target": [
+                    "Formica sanguinea",
+                    null
+                ]
+            },
+            {
+                "description": "Anterior clypeal margin convex, not notched medially (Plate XVI: 1-4)",
+                "next": "10",
+                "target": null
+            }
+        ],
+        "10": [
+            {
+                "description": "Frontal triangle dull (subg. Serviformica For., part.)",
+                "next": "11",
+                "target": null
+            },
+            {
+                "description": "Frontal triangle shiny, contrasting with dull surface of other parts of head (subg. Formica s.str.)",
+                "next": "15",
+                "target": null
+            }
+        ],
+        "11": [
+            {
+                "description": "Head dorsum unicoloured, dark brown to black. Nests with mounds from leaves and twigs (similar to those of wood ants)",
+                "next": null,
+                "target": [
+                    "Formica uralensis",
+                    null
+                ]
+            },
+            {
+                "description": "At least genae and clypeus red. Nests in ground or with soil mounds",
+                "next": "12",
+                "target": null
+            }
+        ],
+        "12": [
+            {
+                "description": "Occipital margin of head and alitrunk dorsum with numerous standing hairs (Plate XV: 13); ventral surface of head with more than 6 standing hairs",
+                "next": null,
+                "target": [
+                    "Formica cinerea (subsp. fuscocinerea)",
+                    null
+                ]
+            },
+            {
+                "description": "Occipital margin of head without standing hairs; alitrunk dorsum without or with not abundant standing hairs (Plate XV: 24, 25); ventral surface of head with 3-4 standing hairs at most",
+                "next": "13",
+                "target": null
+            }
+        ],
+        "13": [
+            {
+                "description": "Petiolar scale with numerous short standing hairs, directed somewhat forwards and backwards; promesonotal dorsum with not less than 10 standing hairs (Plate XV: 24)",
+                "next": null,
+                "target": [
+                    "Formica rufibarbis",
+                    null
+                ]
+            },
+            {
+                "description": "Petiolar scale without standing hairs or, at most, with a few hairs directed upwards; promesonotal dorsum with not more than 6 standing hairs (Plate XV: 25)",
+                "next": "14",
+                "target": null
+            }
+        ],
+        "14": [
+            {
+                "description": "Whole alitrunk yellowish red, without dark patches. More robust species",
+                "next": null,
+                "target": [
+                    "Formica glauca",
+                    null
+                ]
+            },
+            {
+                "description": "Sides of alitrunk with dark patches, occasionally only suturae red. Slender species",
+                "next": null,
+                "target": [
+                    "Formica cunicularia",
+                    null
+                ]
+            }
+        ],
+        "15": [
+            {
+                "description": "Whole head and alitrunk of larger workers red; head and alitrunk with numerous standing hairs (Plate XVI: 1, 5)",
+                "next": null,
+                "target": [
+                    "Formica truncorum",
+                    null
+                ]
+            },
+            {
+                "description": "At least upper third of head dorsum brownish black",
+                "next": "16",
+                "target": null
+            }
+        ],
+        "16": [
+            {
+                "description": "Head and alitrunk with numerous standing hairs (Plate XVI: 2, 6)",
+                "next": "17",
+                "target": null
+            },
+            {
+                "description": "Occipital margin of head without or only with not abundant short erect to suberect hairs (Plate XVI: 3, 4). Alitrunk dorsum without or, at most, with a few standing hairs (Plate XVI: 7, 8)",
+                "next": "18",
+                "target": null
+            }
+        ],
+        "17": [
+            {
+                "description": "Dark patch on promesonotal dorsum with well marked margins",
+                "next": null,
+                "target": [
+                    "Formica pratensis",
+                    null
+                ]
+            },
+            {
+                "description": "Dark patch on promesonotal dorsum (if presents) without well-marked margins",
+                "next": null,
+                "target": [
+                    "Formica lugubris",
+                    null
+                ]
+            }
+        ],
+        "18": [
+            {
+                "description": "Occipital margin of head with at least a few short erect to suberect hairs (Plate XVI: 3)",
+                "next": null,
+                "target": [
+                    "Formica aquilonia",
+                    null
+                ]
+            },
+            {
+                "description": "Occipital margin of head without hairs (Plate XVI: 4)",
+                "next": "19",
+                "target": null
+            }
+        ],
+        "19": [
+            {
+                "description": "Each segment of alitrunk dorsum usually with not less than 6 standing hairs (Plate XVI: 7); ventral surface of head with relatively long erect hairs (to be viewed in profile)",
+                "next": null,
+                "target": [
+                    "Formica rufa",
+                    null
+                ]
+            },
+            {
+                "description": "Each segment of alitrunk dorsum without or with less than 6 standing hairs (Plate XVI: 8); ventral surface of head without or, at most, with short sparse suberect hairs (to be viewed in profile)",
+                "next": null,
+                "target": [
+                    "Formica polyctena",
+                    null
+                ]
+            }
+        ]
+    }
+}

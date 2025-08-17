@@ -11,6 +11,8 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 "$SCRIPT_DIR"/antsofpoland_book/key_ant_myrmica_czechowski/generate.sh
 
+"$SCRIPT_DIR"/antsofpoland_book/key_ant_worker_formica_czechowski/generate.sh
+
 
 ## generate small images
 #$SCRIPT_DIR/generate_small.sh
