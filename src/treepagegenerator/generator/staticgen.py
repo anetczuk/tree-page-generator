@@ -70,6 +70,9 @@ class StaticGenerator:
 
         self.data_loader: DataLoader = None
 
+        self._model_texts = {}
+        self._def_texts = {}
+
     def generate(self, data_loader: DataLoader, output_path):
         self.page_counter = 0
 
@@ -86,11 +89,12 @@ class StaticGenerator:
 
         self.total_count = data_loader.get_total_count()
 
+        self._generate_texts()
         self._generate_index()
 
         ## prepare characteristic pages
-        for item_id, desc_list in model_data.items():
-            self._generate_subpage(item_id, desc_list)
+        for item_id in model_data:
+            self._generate_subpage(item_id)
 
         ## prepare species pages
         all_species = self.data_loader.get_all_leafs()
@@ -102,6 +106,34 @@ class StaticGenerator:
 
         ## prepare dictionary page
         self._generate_defs_page()
+
+    def _generate_texts(self):
+        self._model_texts = {}
+        self._def_texts = {}
+
+        ## prepare model texts
+        model = self.data_loader.model_data
+        model_data: Dict[str, Any] = model.get("data", {})
+        for item_id, desc_list in model_data.items():
+            prepared_list = []
+            for val in desc_list:
+                value = val.get("description")
+                desc, desc_keys = self._prepare_description(value)
+                prepared_list.append((val, desc, desc_keys))
+            self._model_texts[item_id] = prepared_list
+
+        ## prepare dictionary texts
+        defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
+        for keyword, keyword_data_list in defs_dict.items():
+            prepared_list = []
+            for keyword_item in keyword_data_list:
+                def_text = keyword_item.get("text")
+                if not def_text:
+                    prepared_list.append(None)
+                    continue
+                def_desc, def_keys = self._prepare_description(def_text)
+                prepared_list.append((def_text, def_desc, def_keys))
+            self._def_texts[keyword] = prepared_list
 
     def _generate_index(self):
         model = self.data_loader.model_data
@@ -156,7 +188,7 @@ class StaticGenerator:
         self.out_page_dir = os.path.join(self.out_root_dir, "page")
         os.makedirs(self.out_page_dir, exist_ok=True)
 
-    def _generate_subpage(self, item_id, desc_list):
+    def _generate_subpage(self, item_id):
         self.page_counter += 1
         page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
 
@@ -185,7 +217,7 @@ class StaticGenerator:
         prev_content = self._prepare_back_to(self.out_page_dir, item_id)
         content += prev_content + "\n"
 
-        page_content = self._generate_subpage_content(item_id, desc_list)
+        page_content = self._generate_subpage_content(item_id)
         content += page_content
 
         content += """
@@ -198,7 +230,10 @@ class StaticGenerator:
         write_data(page_path, content)
         return page_path
 
-    def _generate_subpage_content(self, item_id, desc_list):
+    def _generate_subpage_content(self, item_id):
+        model = self.data_loader.model_data
+        model_data: Dict[str, Any] = model.get("data", {})
+        desc_list = model_data[item_id]
         columns_num = len(desc_list)
 
         content = ""
@@ -215,11 +250,11 @@ class StaticGenerator:
         )
 
         ## description row
+        prepare_desc_list = self._model_texts[item_id]
         char_keywords = set()
         table_content += "<tr>"
-        for val in desc_list:
-            value = val.get("description")
-            desc, desc_keys = self._prepare_description(value)
+        for prep_data in prepare_desc_list:
+            _value, desc, desc_keys = prep_data
             char_keywords.update(desc_keys)
             table_content += f"""\n   <td>{desc}</td>"""
         table_content += "\n</tr>\n"
@@ -257,6 +292,7 @@ class StaticGenerator:
         ## keywords row
         if char_keywords:
             keywords_list = list(char_keywords)
+            keywords_list = self._get_related_keywords(keywords_list)
             content += """\n<div class="keywords_section">\n"""
             content += self._prepare_defs_table(keywords_list, self.out_page_dir)
             content += """\n</div>\n"""
@@ -424,19 +460,15 @@ class StaticGenerator:
         if info_url:
             content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>\n"""
 
-        model = self.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
-
         ## characteristics list
         char_keywords = set()
         content += """<ul class="characteristic_list">\n"""
         for prev_item in prev_list:
             prev_id = prev_item[0]
-            prev_data = model_data[prev_id]
             prev_desc_index = prev_item[1]
+            prev_data = self._model_texts[prev_id]
             prev_desc_item = prev_data[prev_desc_index]
-            prev_desc = prev_desc_item.get("description")
-            desc, desc_keys = self._prepare_description(prev_desc)
+            _prev_desc, desc, desc_keys = prev_desc_item
             char_keywords.update(desc_keys)
             char_link = f"""<a href="{prev_id}.html">{prev_id}</a>"""
             content += f"""<li>{char_link}: {desc}</li>\n"""
@@ -445,6 +477,7 @@ class StaticGenerator:
         ## keywords row
         if char_keywords:
             keywords_list = list(char_keywords)
+            keywords_list = self._get_related_keywords(keywords_list)
             content += """\n<div class="keywords_section">\n"""
             content += self._prepare_defs_table(keywords_list, self.out_page_dir)
             content += """\n</div>\n"""
@@ -504,8 +537,19 @@ class StaticGenerator:
             """\n<div class="main_section">Explanation of some definitions used in the characteristics.</div>\n"""
         )
 
+        keywords_list = []
+        for prepare_desc_list in self._model_texts.values():
+            for prep_data in prepare_desc_list:
+                if not prep_data:
+                    continue
+                _desc_raw, _desc, desc_keys = prep_data
+                keywords_list.extend(desc_keys)
+        keywords_list = self._get_related_keywords(keywords_list)
+
+        ## copy images
         defs_dict = self.data_loader.get_defs_dict()
-        keywords_list: List[DefItem] = self.data_loader.get_defs_keywords()
+        # keywords_list: List[DefItem] = self.data_loader.get_defs_keywords()
+        # keywords_list = self._get_related_keywords(keywords_list)
 
         for keyword_def in keywords_list:
             keyword = keyword_def.defvalue
@@ -530,6 +574,13 @@ class StaticGenerator:
         write_data(page_path, content)
         return page_path
 
+    def _get_related_keywords(self, def_key_list: List[DefItem]) -> List[DefItem]:
+        def_key_list = self._append_keywords_in_defs(def_key_list)
+        ## remove duplicates
+        def_key_list = list({item.defvalue: item for item in def_key_list}.values())
+        def_key_list.sort(key=lambda x: x.get_label().lower())
+        return def_key_list
+
     def _prepare_back_to(self, subpage_dir, item_id=None):
         main_page_rel_path = os.path.relpath(self.out_index_path, subpage_dir)
         prev_content = """<div class="main_section">Back to: """
@@ -551,24 +602,16 @@ class StaticGenerator:
         if not keywords_list:
             return None
 
-        model = self.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
-        model_item_keys = {}
         ## prepare "mentioned" list
-        for item_id, desc_list in model_data.items():
+        model_item_keys = {}
+        for item_id, prep_desc_list in self._model_texts.items():
             item_keys = []
-            for val in desc_list:
-                desc_text = val.get("description")
-                _desc, desc_keys = self._prepare_description(desc_text)
-                item_keys.extend( [ item.defvalue for item in desc_keys] )
+            for prep_item in prep_desc_list:
+                _desc_text, _desc, desc_keys = prep_item
+                item_keys.extend([item.defvalue for item in desc_keys])
             model_item_keys[item_id] = item_keys
 
-        keywords_list = self._append_keywords_in_defs(keywords_list)
-        ## remove duplicates
-        keywords_list = list({item.defvalue: item for item in keywords_list}.values())
-        keywords_list.sort(key=lambda x: x.get_label().lower())
-
-        defs_dict = self.data_loader.get_defs_dict()
+        defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
         keywords_content = ""
         keywords_content += """<table>\n"""
         keywords_content += """<tr class="title_row"> <th colspan="2">Keywords:</th> </tr>\n"""
@@ -580,9 +623,9 @@ class StaticGenerator:
             single_keyword_content += """    <td> """
 
             keyword_data_list = defs_dict[keyword]
+            keyword_text_list = self._def_texts[keyword]
             keyword_defs_content = ""
-            for keyword_item in keyword_data_list:
-                def_text = keyword_item.get("text")
+            for keyword_index, keyword_item in enumerate(keyword_data_list):
                 img_rel_path = None
                 photo_path = keyword_item.get("image")
                 if photo_path:
@@ -590,8 +633,9 @@ class StaticGenerator:
                     img_rel_path = os.path.relpath(dest_img_path, page_dir)
                 description_content = keyword_item.get("description")
                 keyword_defs_content = """<div class="imgtile">\n"""
-                if def_text:
-                    def_text, _def_keys = self._prepare_description(def_text)
+                def_item = keyword_text_list[keyword_index]
+                if def_item:
+                    _def_raw, def_text, _def_keys = def_item
                     keyword_defs_content += f"""         <div>{def_text}</div>\n"""
                 if img_rel_path:
                     keyword_defs_content += f"""         <a href="{img_rel_path}"><img src="{img_rel_path}"></a>\n"""
@@ -626,19 +670,17 @@ class StaticGenerator:
         return keywords_content
 
     def _append_keywords_in_defs(self, keywords_list: List[DefItem]):
-        defs_dict = self.data_loader.get_defs_dict()
         counter = 0
         found_keywords = {item.defvalue for item in keywords_list}
         while counter < len(keywords_list):
             keyword_def = keywords_list[counter]
             keyword = keyword_def.defvalue
             counter += 1
-            keyword_data_list = defs_dict[keyword]
-            for keyword_item in keyword_data_list:
-                def_text = keyword_item.get("text")
-                if not def_text:
+            keyword_data_list = self._def_texts[keyword]
+            for def_item in keyword_data_list:
+                if not def_item:
                     continue
-                _def_desc, def_keys = self._prepare_description(def_text)
+                _def_raw, _def_desc, def_keys = def_item
                 for item in def_keys:
                     if item.defvalue not in found_keywords:
                         found_keywords.add(item.defvalue)
