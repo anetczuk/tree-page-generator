@@ -8,7 +8,7 @@
 
 import os
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Set
 import math
 import json
 import shutil
@@ -102,6 +102,19 @@ class NavDict:
         return ret_list
 
 
+class DefItem:
+
+    def __init__(self, defvalue, label, casesensitive):
+        self.defvalue: str = defvalue
+        self.label: str = label
+        self.casesensitive: bool = casesensitive
+
+    def get_label(self) -> str:
+        if self.label:
+            return self.label
+        return self.defvalue
+
+
 class DataLoader:
     def __init__(self, config_path, translation_path=None):
         self.config_path = config_path
@@ -118,6 +131,7 @@ class DataLoader:
         self.potential_species: Dict[str, List[str]] = self._load_potential_species()
 
         ## [  defs_dict: {  "defs": [ str ]
+        ##                  "label": str
         ##                  "casesensitive": bool
         ##                  "image": str
         ##                  "text": str
@@ -195,6 +209,7 @@ class DataLoader:
             return json.load(fp)
 
     ## [  {  "defs": [ str ]
+    ##       "label": str
     ##       "casesensitive": bool
     ##       "image": str
     ##       "text": str
@@ -221,9 +236,11 @@ class DataLoader:
 
                 #### "defs.json" file specification:
                 ## [  def_dict: {  "defs": [ str ]
+                ##                 "label": str
                 ##                 "casesensitive": bool
                 ##                 "description": str
                 ##                 "items": {  "defs": [ str ]
+                ##                             "label": str
                 ##                             "casesensitive": bool
                 ##                             "image": str
                 ##                             "text": str
@@ -247,6 +264,7 @@ class DataLoader:
 
                 for defs_dict in defs_list:
                     def_defs = defs_dict.pop("defs", [])
+                    def_label = defs_dict.pop("label", None)
                     def_casesensitive = defs_dict.pop("casesensitive", False)
                     def_description = defs_dict.pop("description", None)
                     def_items = defs_dict["items"]
@@ -259,6 +277,8 @@ class DataLoader:
                             item["image"] = image_path
                         if "defs" not in item:
                             item["defs"] = def_defs
+                        if "label" not in item:
+                            item["label"] = def_label
                         if "casesensitive" not in item:
                             item["casesensitive"] = def_casesensitive
                         if "description" not in item:
@@ -314,22 +334,23 @@ class DataLoader:
         # total_count = self.get_total_count()
         # print("total_count:", total_count)
 
-    ### [ (str, bool) ]
-    def get_all_defs(self) -> List[str]:
+    def get_all_defs(self) -> List[DefItem]:
         if not self.defs_list:
             return []
-        defs_set = set()
+        defs_set: Set[DefItem] = set()
         for defs_dict in self.defs_list:
             defs = defs_dict.get("defs", [])
+            label = defs_dict.get("label")
             item_casesensitive = defs_dict.get("casesensitive", False)
-            defs = [(item, item_casesensitive) for item in defs]
-            defs_set.update(defs)
-        defs_list = list(defs_set)
-        defs_list = sorted(defs_list, key=lambda xtuple: (-len(xtuple[0]), *xtuple))
+            for item in defs:
+                defs_set.add(DefItem(item, label, item_casesensitive))
+        defs_list: List[DefItem] = list(defs_set)
+        defs_list = sorted(defs_list, key=lambda xtuple: (-len(xtuple.defvalue), xtuple.defvalue, xtuple.label))
         return defs_list
 
     ## defs_dict: {  def: str,
-    ##               item:  [  {  "casesensitive": bool
+    ##               item:  [  {  "label": str
+    ##                            "casesensitive": bool
     ##                            "image": str
     ##                            "text": str
     ##                            "description": str
@@ -349,6 +370,15 @@ class DataLoader:
                 def_list.append(copied_item)
                 ret_dict[def_name] = def_list
         return ret_dict
+
+    def get_defs_keywords(self) -> List[DefItem]:
+        ret_list = []
+        defs_dict = self.get_defs_dict()
+        for key, item_list in defs_dict.items():
+            for item in item_list:
+                ret_list.append(DefItem(key, item.get("label"), item.get("casesensitive")))
+        ret_list.sort(key=lambda x: x.defvalue)
+        return ret_list
 
     def get_defs(self, def_name) -> List[Any]:
         if not self.defs_list:

@@ -17,7 +17,7 @@ import shutil
 from showgraph.graphviz import Graph, set_node_style
 
 from treepagegenerator.utils import write_data
-from treepagegenerator.generator.dataloader import DataLoader, copy_image
+from treepagegenerator.generator.dataloader import DataLoader, copy_image, DefItem
 from treepagegenerator.generator.utils import HTML_LICENSE
 from treepagegenerator.data import DATA_DIR
 
@@ -257,8 +257,6 @@ class StaticGenerator:
         ## keywords row
         if char_keywords:
             keywords_list = list(char_keywords)
-            keywords_list.sort()
-
             content += """\n<div class="keywords_section">\n"""
             content += self._prepare_defs_table(keywords_list, self.out_page_dir)
             content += """\n</div>\n"""
@@ -309,23 +307,24 @@ class StaticGenerator:
             return potential_content
         return None
 
-    def _prepare_description(self, description) -> Tuple[str, List[str]]:
-        description_defs_list = self.data_loader.get_all_defs()
+    def _prepare_description(self, description) -> Tuple[str, List[DefItem]]:
+        description_defs_list: List[DefItem] = self.data_loader.get_all_defs()
         ret_descr = description
-        ret_keywords = []
+        ret_keywords: List[DefItem] = []
 
-        places = find_all_defs(description, description_defs_list)
-        places = sorted(places, key=lambda x: (x[0], -len(x[1])))
+        places: List[Tuple[int, DefItem]] = find_all_defs(description, description_defs_list)
+        places = sorted(places, key=lambda x: (x[0], -len(x[1].defvalue)))
         places.reverse()
-        for palce_item in places:
-            pos = palce_item[0]
-            def_item = palce_item[1]
-            def_len = len(def_item)
+        for place_item in places:
+            pos: int = place_item[0]
+            def_item: DefItem = place_item[1]
+            def_keyword = def_item.defvalue
+            def_len = len(def_keyword)
             end_pos = pos + def_len
             ## add suffix to def
             ret_descr = ret_descr[:end_pos] + "</a>" + ret_descr[end_pos:]
             ## add prefix to def
-            ret_descr = ret_descr[:pos] + f"""<a href="#{def_item}" class="def_item">""" + ret_descr[pos:]
+            ret_descr = ret_descr[:pos] + f"""<a href="#{def_keyword}" class="def_item">""" + ret_descr[pos:]
             ret_keywords.append(def_item)
 
         return ret_descr, ret_keywords
@@ -446,8 +445,6 @@ class StaticGenerator:
         ## keywords row
         if char_keywords:
             keywords_list = list(char_keywords)
-            keywords_list.sort()
-
             content += """\n<div class="keywords_section">\n"""
             content += self._prepare_defs_table(keywords_list, self.out_page_dir)
             content += """\n</div>\n"""
@@ -508,10 +505,10 @@ class StaticGenerator:
         )
 
         defs_dict = self.data_loader.get_defs_dict()
-        keywords_list = list(defs_dict.keys())
-        keywords_list.sort()
+        keywords_list: List[DefItem] = self.data_loader.get_defs_keywords()
 
-        for keyword in keywords_list:
+        for keyword_def in keywords_list:
+            keyword = keyword_def.defvalue
             keyword_data_list = defs_dict[keyword]
             for keyword_item in keyword_data_list:
                 photo_path = keyword_item.get("image")
@@ -550,7 +547,7 @@ class StaticGenerator:
         prev_content += "</div>"
         return prev_content
 
-    def _prepare_defs_table(self, keywords_list, page_dir):
+    def _prepare_defs_table(self, keywords_list: List[DefItem], page_dir):  # pylint: disable=R0914
         if not keywords_list:
             return None
 
@@ -563,18 +560,23 @@ class StaticGenerator:
             for val in desc_list:
                 desc_text = val.get("description")
                 _desc, desc_keys = self._prepare_description(desc_text)
-                item_keys.extend(desc_keys)
+                item_keys.extend( [ item.defvalue for item in desc_keys] )
             model_item_keys[item_id] = item_keys
 
         keywords_list = self._append_keywords_in_defs(keywords_list)
+        ## remove duplicates
+        keywords_list = list({item.defvalue: item for item in keywords_list}.values())
+        keywords_list.sort(key=lambda x: x.get_label().lower())
 
         defs_dict = self.data_loader.get_defs_dict()
         keywords_content = ""
         keywords_content += """<table>\n"""
         keywords_content += """<tr class="title_row"> <th colspan="2">Keywords:</th> </tr>\n"""
-        for keyword in keywords_list:
+        for keyword_def in keywords_list:
+            keyword = keyword_def.defvalue
+            keyword_label = keyword_def.get_label()
             single_keyword_content = f"""<tr class="def_row">
-    <td class="def_item"><a name="{keyword}"></a>{keyword}</td>\n"""
+    <td class="def_item"><a name="{keyword}"></a>{keyword_label}</td>\n"""
             single_keyword_content += """    <td> """
 
             keyword_data_list = defs_dict[keyword]
@@ -623,11 +625,13 @@ class StaticGenerator:
 
         return keywords_content
 
-    def _append_keywords_in_defs(self, keywords_list):
+    def _append_keywords_in_defs(self, keywords_list: List[DefItem]):
         defs_dict = self.data_loader.get_defs_dict()
         counter = 0
+        found_keywords = {item.defvalue for item in keywords_list}
         while counter < len(keywords_list):
-            keyword = keywords_list[counter]
+            keyword_def = keywords_list[counter]
+            keyword = keyword_def.defvalue
             counter += 1
             keyword_data_list = defs_dict[keyword]
             for keyword_item in keyword_data_list:
@@ -636,9 +640,10 @@ class StaticGenerator:
                     continue
                 _def_desc, def_keys = self._prepare_description(def_text)
                 for item in def_keys:
-                    if item not in keywords_list:
+                    if item.defvalue not in found_keywords:
+                        found_keywords.add(item.defvalue)
                         keywords_list.append(item)
-        keywords_list = sorted(list(set(keywords_list)), key=lambda x: x.lower())
+        keywords_list = sorted(list(set(keywords_list)), key=lambda x: x.defvalue.lower())
         return keywords_list
 
 
@@ -660,10 +665,11 @@ def get_path_components(path, level):
     return ret
 
 
-def find_all_defs(content, def_list: List[Any]) -> List[Tuple[int, str]]:
+def find_all_defs(content, def_list: List[DefItem]) -> List[Tuple[int, DefItem]]:
     palces_list = []
     for def_item in def_list:
-        def_key, def_match = def_item
+        def_key = def_item.defvalue
+        def_match = def_item.casesensitive
         item_content = content
         if def_match is False:
             item_content = content.lower()
@@ -671,17 +677,17 @@ def find_all_defs(content, def_list: List[Any]) -> List[Tuple[int, str]]:
         if not places:
             continue
         for pos in places:
-            palces_list.append((pos, def_key))
+            palces_list.append((pos, def_item))
 
     ret_list = []
     recent_end = -1
-    palces_list = sorted(palces_list, key=lambda x: (x[0], -len(x[1])))
+    palces_list = sorted(palces_list, key=lambda x: (x[0], -len(x[1].defvalue)))
     for pos_item in palces_list:
         pos = pos_item[0]
         if pos <= recent_end:
             continue
         ret_list.append(pos_item)
-        pos_end = pos + len(pos_item[1])
+        pos_end = pos + len(pos_item[1].defvalue)
         recent_end = pos_end
 
     return ret_list

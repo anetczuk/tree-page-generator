@@ -1,5 +1,6 @@
 {
-    "defs": ["Plate IX"],
+    "defs": ["IX"],
+    "label": "Plate IX",
     "casesensitive": true,
     "items": [
          {  "image": "plate_9.png",
