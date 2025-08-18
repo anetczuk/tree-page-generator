@@ -2,9 +2,6 @@
     "defs": ["XV"],
     "label": "Plate XV",
     "casesensitive": true,
-    "items": [
-         {  "image": "plate_15.png",
-            "description": "<i>Wojciech Czechowski, Alexander Radchenko, Wiesława Czechowska. 2002. The ants (Hymenoptera, Formicidae) of Poland</i>"
-         }
-    ]
+    "image": "plate_15.png",
+    "description": "<i>Wojciech Czechowski, Alexander Radchenko, Wiesława Czechowska. 2002. The ants (Hymenoptera, Formicidae) of Poland</i>"
 }

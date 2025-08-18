@@ -3,8 +3,6 @@
              "compound eye", "compound eyes", "eye", "eyes",  
              "frontal carina", "frontal carinae", "carina", "carinae", "frontal lobe", "lobe", "funiculus", "mandible", "ocelli", 
              "scape", "antennal scape" ],
-    "items": [
-     {  "image": "500px-GlossaryAntFrontHead.jpg",
-        "description": "<i><a href='https://www.antwiki.org/wiki/Morphological_Terms/Worker_Head'>Morphological Terms/Worker Head</a>, via AntWiki</i>" }
-    ]
+    "image": "500px-GlossaryAntFrontHead.jpg",
+    "description": "<i><a href='https://www.antwiki.org/wiki/Morphological_Terms/Worker_Head'>Morphological Terms/Worker Head</a>, via AntWiki</i>" 
 }

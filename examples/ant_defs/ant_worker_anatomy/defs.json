@@ -4,8 +4,6 @@
              "metanotum", "propodeum", "propodeal spinacle", "petiole", "petiolar", "postpetiole", "postpetiolar", "sternite", "sting", "tarsal claw", 
              "tarsus", "tibial spurs", "tibia", "femur", "femurs", "femora", "ventral process", "throchanter", "coxa", 
              "katepisternum", "anepisternum", "metathoracic spiracle"],
-    "items": [
-     {  "image": "Scheme_ant_worker_anatomy-en.png",
-        "description": "<i><a href='https://en.wikipedia.org/wiki/File:Scheme_ant_worker_anatomy-en.svg'>Source</a>, via Wikipedia</i>" }
-    ]
+    "image": "Scheme_ant_worker_anatomy-en.png",
+    "description": "<i><a href='https://en.wikipedia.org/wiki/File:Scheme_ant_worker_anatomy-en.svg'>Source</a>, via Wikipedia</i>" 
 }

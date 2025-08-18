@@ -235,19 +235,21 @@ class DataLoader:
                     continue
 
                 #### "defs.json" file specification:
-                ## [  def_dict: {  "defs": [ str ]
-                ##                 "label": str
-                ##                 "casesensitive": bool
-                ##                 "description": str
-                ##                 "items": {  "defs": [ str ]
-                ##                             "label": str
-                ##                             "casesensitive": bool
-                ##                             "image": str
-                ##                             "text": str
-                ##                             "description": str
-                ##                          }
-                ##              }
-                ## ] || def_dict
+                ## [  def_items_dict =
+                ##    {  "defs": [ str ]
+                ##       "label": str
+                ##       "casesensitive": bool
+                ##       "description": str
+                ##       "items": defs_item =
+                ##                {  "defs": [ str ]
+                ##                   "label": str
+                ##                   "casesensitive": bool
+                ##                   "image": str
+                ##                   "text": str
+                ##                   "description": str
+                ##                }
+                ##    } || defs_item
+                ## ] || def_items_dict || defs_item
                 defs_data = None
                 try:
                     with open(defs_file_path, "r", encoding="utf8") as fp:
@@ -263,11 +265,21 @@ class DataLoader:
                     defs_list.append(defs_data)
 
                 for defs_dict in defs_list:
+                    def_items = defs_dict.get("items")
+                    if def_items is None:
+                        ## simple data
+                        image_path = defs_dict.get("image")
+                        if image_path:
+                            image_path = os.path.join(defs_dir_path, image_path)
+                            if not os.path.isfile(image_path):
+                                _LOGGER.error("could not find image in defs file: %s", defs_file_path)
+                            defs_dict["image"] = image_path
+                        ret_list.append(defs_dict)
+                        continue
                     def_defs = defs_dict.pop("defs", [])
                     def_label = defs_dict.pop("label", None)
                     def_casesensitive = defs_dict.pop("casesensitive", False)
                     def_description = defs_dict.pop("description", None)
-                    def_items = defs_dict["items"]
                     for item in def_items:
                         image_path = item.get("image")
                         if image_path:

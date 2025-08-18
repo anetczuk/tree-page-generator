@@ -1,7 +1,5 @@
 {
     "defs": ["basal"],
-    "items": [
-     {  "image": "basal.png",
-        "description": "<i>Wilson, E. O. 1955. A monographic revision of the ant genus Lasius. Bulletin of the Museum of Comparative Zoology.</i>" }
-    ]
+    "image": "basal.png",
+    "description": "<i>Wilson, E. O. 1955. A monographic revision of the ant genus Lasius. Bulletin of the Museum of Comparative Zoology.</i>" 
 }

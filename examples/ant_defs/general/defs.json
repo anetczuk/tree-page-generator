@@ -1,13 +1,11 @@
-{
-    "items": [
-         {  "defs": ["apex"],
-            "text": "the top or highest part of something, especially one forming a point" 
-         },
-         {  "defs": ["concave"],
-            "text": "concave is defined as a shape that curves inward, like the inside of a bowl or a sphere" 
-         },
-         {  "defs": ["convex"],
-            "text": "convex is an adjective describing a surface or shape that curves or bulges outward" 
-         }
-    ]
-}
+[
+     {  "defs": ["apex"],
+        "text": "the top or highest part of something, especially one forming a point" 
+     },
+     {  "defs": ["concave"],
+        "text": "concave is defined as a shape that curves inward, like the inside of a bowl or a sphere" 
+     },
+     {  "defs": ["convex"],
+        "text": "convex is an adjective describing a surface or shape that curves or bulges outward" 
+     }
+]
