@@ -16,7 +16,7 @@ import shutil
 
 from showgraph.graphviz import Graph, set_node_style
 
-from treepagegenerator.utils import write_data
+from treepagegenerator.utils import write_data, read_data
 from treepagegenerator.generator.dataloader import DataLoader, copy_image, DefItem
 from treepagegenerator.generator.utils import HTML_LICENSE
 from treepagegenerator.data import DATA_DIR
@@ -27,10 +27,10 @@ SCRIPT_DIR = os.path.dirname(__file__)
 _LOGGER = logging.getLogger(__name__)
 
 
-def generate_pages(config_path, translation_path, _nophotos, output_path):
+def generate_pages(config_path, translation_path, output_path, embedcss=False):
     gen = StaticGenerator()
     data_loader = DataLoader(config_path, translation_path)
-    gen.generate(data_loader, output_path)
+    gen.generate(data_loader, output_path, embedcss=embedcss)
 
     # check_defs_repetitions(data_loader)
 
@@ -64,6 +64,8 @@ class StaticGenerator:
         self.out_img_dir = None
         self.out_index_path = None
 
+        self.embedcss = False
+
         self.label_back_to_main = "Main page"
         self.label_characteristic = "cecha"
         self.label_value = "wartość"
@@ -73,7 +75,9 @@ class StaticGenerator:
         self._model_texts = {}
         self._def_texts = {}
 
-    def generate(self, data_loader: DataLoader, output_path):
+    def generate(self, data_loader: DataLoader, output_path,
+                 embedcss=False):
+        self.embedcss = embedcss
         self.page_counter = 0
 
         self.out_root_dir = output_path
@@ -143,6 +147,8 @@ class StaticGenerator:
         page_title = self.data_loader.get_model_title()
         model_desc = self.data_loader.get_model_description()
 
+        css_content = self._prepare_css(self.out_root_dir)
+
         ## main/index page
         content = ""
         content += f"""\
@@ -152,8 +158,8 @@ class StaticGenerator:
 
 <head>
     <title>{page_title}</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
 </head>
 
 <body>
@@ -182,17 +188,34 @@ class StaticGenerator:
 """
         write_data(self.out_index_path, content)
 
-        css_styles_path = os.path.join(DATA_DIR, "styles.css")
-        shutil.copy(css_styles_path, self.out_root_dir, follow_symlinks=True)
+        if not self.embedcss:
+            css_styles_path = os.path.join(DATA_DIR, "styles.css")
+            shutil.copy(css_styles_path, self.out_root_dir, follow_symlinks=True)
 
         self.out_page_dir = os.path.join(self.out_root_dir, "page")
         os.makedirs(self.out_page_dir, exist_ok=True)
+
+    def _prepare_css(self, page_dir):
+        if not self.embedcss:
+            css_target_path = os.path.join(self.out_root_dir, "styles.css")
+            css_rel_path = os.path.relpath(css_target_path, page_dir)
+            return f"""<link rel="stylesheet" type="text/css" href="{css_rel_path}">"""
+        else:
+            css_source_path = os.path.join(DATA_DIR, "styles.css")
+            css_content = read_data(css_source_path)
+            page_script_content = f"""<style>
+{css_content}
+    </style>
+"""
+        return page_script_content
 
     def _generate_subpage(self, item_id):
         self.page_counter += 1
         page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
 
         page_title = self.data_loader.get_model_title()
+
+        css_content = self._prepare_css(self.out_page_dir)
 
         ## characteristic page
         content = ""
@@ -203,8 +226,8 @@ class StaticGenerator:
 
 <head>
     <title>{page_title} - characteristics</title>
-    <link rel="stylesheet" type="text/css" href="../styles.css">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
 </head>
 
 <body>
@@ -370,6 +393,8 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
+        css_content = self._prepare_css(self.out_root_dir)
+
         ## species list page
         content = ""
         content += f"""\
@@ -379,8 +404,8 @@ class StaticGenerator:
 
 <head>
     <title>{page_title} - species</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
 </head>
 
 <body>
@@ -429,6 +454,8 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
+        css_content = self._prepare_css(self.out_page_dir)
+
         ## species page
         content = ""
         content += f"""\
@@ -438,8 +465,8 @@ class StaticGenerator:
 
 <head>
     <title>{page_title} - {species_name}</title>
-    <link rel="stylesheet" type="text/css" href="../styles.css">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
 </head>
 
 <body>
@@ -510,6 +537,8 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
+        css_content = self._prepare_css(self.out_root_dir)
+
         ## dictionary page
         content = ""
         content += f"""\
@@ -519,8 +548,8 @@ class StaticGenerator:
 
 <head>
     <title>{page_title} - dictionary</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
 </head>
 
 <body>

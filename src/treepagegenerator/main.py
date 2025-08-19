@@ -37,10 +37,11 @@ def process_generate(args):
     _LOGGER.debug("logging to file: %s", logger.log_file)
     config_path = args.config
     translation_path = args.translation
-    nophotos = str(args.nophotos).lower() != "false"
+    embedcss = args.embedcss
     output_path = args.outdir
 
-    generate_pages(config_path, translation_path, nophotos, output_path)
+    generate_pages(config_path, translation_path, output_path, 
+                   embedcss=embedcss)
     return 0
 
 
@@ -79,7 +80,7 @@ def main():
     subparser.set_defaults(func=process_generate)
     subparser.add_argument("-c", "--config", action="store", required=False, help="Path to config file")
     subparser.add_argument("-t", "--translation", action="store", required=False, help="Path to translation file")
-    subparser.add_argument("--nophotos", action="store", default=False, help="Do not generate image galleries")
+    subparser.add_argument("--embedcss", action="store_true", default=False, help="Embed CSS styles")
     subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
 
     ## =================================================

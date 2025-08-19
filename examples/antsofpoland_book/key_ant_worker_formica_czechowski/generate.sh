@@ -41,6 +41,7 @@ fi
 set -x
 python3 -m treepagegenerator.main -la generate \
                                   --config "$CONFIG_PATH" \
+                                  --embedcss \
                                   --outdir "$OUT_DIR"
 { set +x; } 2> /dev/null
 
