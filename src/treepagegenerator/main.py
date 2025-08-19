@@ -38,10 +38,10 @@ def process_generate(args):
     config_path = args.config
     translation_path = args.translation
     embedcss = args.embedcss
+    embedimages = args.embedimages
     output_path = args.outdir
 
-    generate_pages(config_path, translation_path, output_path, 
-                   embedcss=embedcss)
+    generate_pages(config_path, translation_path, output_path, embedcss=embedcss, embedimages=embedimages)
     return 0
 
 
@@ -81,6 +81,7 @@ def main():
     subparser.add_argument("-c", "--config", action="store", required=False, help="Path to config file")
     subparser.add_argument("-t", "--translation", action="store", required=False, help="Path to translation file")
     subparser.add_argument("--embedcss", action="store_true", default=False, help="Embed CSS styles")
+    subparser.add_argument("--embedimages", action="store_true", default=False, help="Embed images")
     subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
 
     ## =================================================

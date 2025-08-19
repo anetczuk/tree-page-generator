@@ -24,7 +24,7 @@ subcommands:
 ```
 usage: python3 -m treepagegenerator.main generate [-h] [-c CONFIG]
                                                   [-t TRANSLATION]
-                                                  [--nophotos NOPHOTOS]
+                                                  [--embedcss] [--embedimages]
                                                   --outdir OUTDIR
 
 generate tree static pages
@@ -35,7 +35,8 @@ options:
                         Path to config file (default: None)
   -t TRANSLATION, --translation TRANSLATION
                         Path to translation file (default: None)
-  --nophotos NOPHOTOS   Do not generate image galleries (default: False)
+  --embedcss            Embed CSS styles (default: False)
+  --embedimages         Embed images (default: False)
   --outdir OUTDIR       Path to output directory (default: None)
 ```
 
