@@ -98,26 +98,29 @@ class StaticGenerator:
         model_data: Dict[str, Any] = model.get("data", {})
 
         self.total_count = data_loader.get_total_count()
+        self.total_count += 3  ## additional predefined pages
 
-        self._generate_texts()
-        self._generate_index()
+        self._prepare_texts()
+
+        ## prepare index page
+        self._generate_index_page()
 
         ## prepare characteristic pages
         for item_id in model_data:
-            self._generate_subpage(item_id)
+            self._generate_model_page(item_id)
+
+        ## prepare species page
+        self._generate_species_index_page()
 
         ## prepare species pages
         all_species = self.data_loader.get_all_leafs()
         for item in all_species:
-            self._generate_species_subpage(item)
-
-        ## prepare species page
-        self._generate_species_page()
+            self._generate_species_page(item)
 
         ## prepare dictionary page
-        self._generate_defs_page()
+        self._generate_dictionary_page()
 
-    def _generate_texts(self):
+    def _prepare_texts(self):
         self._model_texts = {}
         self._def_texts = {}
 
@@ -145,7 +148,7 @@ class StaticGenerator:
                 prepared_list.append((def_text, def_desc, def_keys))
             self._def_texts[keyword] = prepared_list
 
-    def _generate_index(self):
+    def _generate_index_page(self):
         model = self.data_loader.model_data
         model_start = model.get("start")
         self.out_index_path = os.path.join(self.out_root_dir, "index.html")
@@ -171,7 +174,8 @@ class StaticGenerator:
 </head>
 
 <body>
-
+"""
+        content += f"""
 <div class="main_section title">{page_title}</div>
 
 <div class="main_section description">
@@ -189,12 +193,12 @@ class StaticGenerator:
 <div class="main_section">
 <a href="dictionary.html">Dictionary</a>
 </div>
-
+"""
+        content += """
 </body>
-
 </html>
 """
-        write_data(self.out_index_path, content)
+        self._store_content(self.out_index_path, content)
 
         if not self.embedcss:
             css_styles_path = os.path.join(DATA_DIR, "styles.css")
@@ -218,11 +222,10 @@ class StaticGenerator:
 """
         return page_script_content
 
-    def _generate_subpage(self, item_id):
-        self.page_counter += 1
+    def _generate_model_page(self, item_id):
         page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
 
-        page_content, keywords_list = self._generate_subpage_content(item_id)
+        page_content, keywords_list = self._prepare_model_subpage_content(item_id)
         images_list = self._get_image_paths_from_defs(keywords_list)
 
         page_title = self.data_loader.get_model_title()
@@ -244,7 +247,8 @@ class StaticGenerator:
 </head>
 
 <body>
-
+"""
+        content += f"""
 <div class="main_section title">{page_title}</div>
 
 """
@@ -257,11 +261,7 @@ class StaticGenerator:
 </body>
 </html>
 """
-        progress = self.page_counter / self.total_count * 100
-        # progress = int(self.page_counter / self.total_count * 10000) / 100
-        _LOGGER.debug("%.2f%% writing page: %s", progress, page_path)
-        write_data(page_path, content)
-        return page_path
+        self._store_content(page_path, content)
 
     def _get_image_paths_from_defs(self, keywords_list: List[DefItem]):
         ret_list = []
@@ -275,7 +275,7 @@ class StaticGenerator:
                     ret_list.append(photo_path)
         return ret_list
 
-    def _generate_subpage_content(self, item_id) -> Tuple[str, List[DefItem]]:
+    def _prepare_model_subpage_content(self, item_id) -> Tuple[str, List[DefItem]]:
         model = self.data_loader.model_data
         model_data: Dict[str, Any] = model.get("data", {})
         desc_list = model_data[item_id]
@@ -430,7 +430,7 @@ class StaticGenerator:
 
         return ret_descr, ret_keywords
 
-    def _generate_species_page(self):
+    def _generate_species_index_page(self):
         page_path = os.path.join(self.out_root_dir, "species.html")
 
         page_title = self.data_loader.get_model_title()
@@ -453,7 +453,8 @@ class StaticGenerator:
 </head>
 
 <body>
-
+"""
+        content += f"""
 <div class="main_section title">{page_title}</div>
 
 """
@@ -484,10 +485,9 @@ class StaticGenerator:
 </body>
 </html>
 """
-        write_data(page_path, content)
-        return page_path
+        self._store_content(page_path, content)
 
-    def _generate_species_subpage(self, species_id):
+    def _generate_species_page(self, species_id):
         species_id_low = prepare_filename(species_id)
         page_path = os.path.join(self.out_page_dir, f"{species_id_low}.html")
 
@@ -540,7 +540,8 @@ class StaticGenerator:
 </head>
 
 <body>
-
+"""
+        content += f"""
 <div class="main_section title">{page_title}</div>
 
 """
@@ -562,8 +563,7 @@ class StaticGenerator:
 </body>
 </html>
 """
-        write_data(page_path, content)
-        return page_path
+        self._store_content(page_path, content)
 
     def _prepare_tree_graph(self, active_item_id):
         data_graph = generate_graph(self.data_loader, active_item_id)
@@ -581,7 +581,7 @@ class StaticGenerator:
 </div>
 """
 
-    def _generate_defs_page(self):
+    def _generate_dictionary_page(self):
         page_path = os.path.join(self.out_root_dir, "dictionary.html")
 
         keywords_list = []
@@ -613,7 +613,8 @@ class StaticGenerator:
 </head>
 
 <body>
-
+"""
+        content += f"""
 <div class="main_section title">{page_title}</div>
 
 """
@@ -650,8 +651,7 @@ class StaticGenerator:
 </body>
 </html>
 """
-        write_data(page_path, content)
-        return page_path
+        self._store_content(page_path, content)
 
     def _prepare_images_content(self, source_image_path_list=None):
         if not self.embedimages:
@@ -814,6 +814,13 @@ class StaticGenerator:
                         keywords_list.append(item)
         keywords_list = sorted(list(set(keywords_list)), key=lambda x: x.defvalue.lower())
         return keywords_list
+
+    def _store_content(self, page_path, content):
+        self.page_counter += 1
+        progress = self.page_counter / self.total_count * 100
+        # progress = int(self.page_counter / self.total_count * 10000) / 100
+        _LOGGER.debug("%.2f%% storing page: %s", progress, page_path)
+        write_data(page_path, content)
 
 
 ## ===========================================================================================

@@ -311,6 +311,7 @@ class DataLoader:
     def get_total_count(self) -> int:
         data_list = self.model_data.get("data")
         total_count = len(data_list)
+        total_count += len(self.get_all_leafs())
         return total_count
 
     def get_all_leafs(self) -> List[str]:
