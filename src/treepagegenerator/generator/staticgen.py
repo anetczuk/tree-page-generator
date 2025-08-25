@@ -1,3 +1,4 @@
+# pylint: disable=C0302
 #
 # Copyright (c) 2024, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -56,10 +57,10 @@ def check_defs_repetitions(data_loader: DataLoader):
 ## ============================================
 
 
-##
-## Generating all possibilities is time consuming.
-##
-class StaticGenerator:
+LABEL_BACK_TO_MAIN = "Main page"
+
+
+class BaseGenerator:
     def __init__(self):  # noqa: F811
         self.total_count = 0
         self.page_counter = 0
@@ -73,121 +74,41 @@ class StaticGenerator:
         self.embedimages = False
         self.singlepagemode = False
 
-        self.label_back_to_main = "Main page"
-        self.label_characteristic = "cecha"
-        self.label_value = "wartość"
-
         self.data_loader: DataLoader = None
 
         ## buffer for single page mode
         self._content = ""
 
-    def generate(self, data_loader: DataLoader, output_path, embedcss=False, embedimages=False, singlepagemode=False):
-        self.embedcss = embedcss
-        self.embedimages = embedimages
-        self.singlepagemode = singlepagemode
-        self.page_counter = 0
-
+    def set_root_dir(self, output_path):
         self.out_root_dir = output_path
+
         os.makedirs(self.out_root_dir, exist_ok=True)
 
         self.out_img_dir = os.path.join(self.out_root_dir, "img")
         if not self.embedimages:
             os.makedirs(self.out_img_dir, exist_ok=True)
 
-        self.data_loader = data_loader
-
-        model = self.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
-
-        self.total_count = data_loader.get_total_count()
-        self.total_count += 3  ## additional predefined pages
-
         self.out_page_dir = os.path.join(self.out_root_dir, "page")
         if not self.singlepagemode:
             os.makedirs(self.out_page_dir, exist_ok=True)
 
-        ## prepare index page
-        self._generate_index_page()
+    def get_content(self) -> str:
+        return self._content
 
-        ## prepare characteristic pages
-        for item_id in model_data:
-            self._generate_model_page(item_id)
-
-        ## prepare species page
-        self._generate_species_index_page()
-
-        ## prepare species pages
-        all_species = self.data_loader.get_all_leafs()
-        for item in all_species:
-            self._generate_species_page(item)
-
-        ## prepare dictionary page
-        self._generate_dictionary_page()
-
-        if self.singlepagemode:
-            self._store_singlepage()
-
-    def _store_singlepage(self):
-        page_title = self.data_loader.get_model_title()
-        css_content = self._prepare_css(self.out_root_dir)
-
-        keywords_list = self._get_all_keywords("singlepage_html")
-        images_list = self._get_image_paths_from_defs(keywords_list)
-
-        images_content = self._prepare_images_content(images_list)
-
-        self._content = f"""\
-<!DOCTYPE html>
-<html>
-{HTML_LICENSE}
-
-<head>
-    <title>{page_title}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <style>
-label {{
-    cursor: pointer;
-    color: blue;
-}}
-.page-selector, .page-content {{
-    display: none;
-}}
-.page-selector:checked ~ .page-content {{
-    display: block;
-}}
-    </style>
-    {css_content}
-    {images_content}
-</head>
-<body>
-
-{self._content}
-
-</body>
-</html>
-"""
-
-        write_data(self.out_index_path, self._content)
-
-    def _prepare_model_item_descr(self, page_id=None):
+    def prepare_model_item_descr(self):
         model_texts = {}
         model = self.data_loader.model_data
         model_data: Dict[str, Any] = model.get("data", {})
         for item_id, desc_list in model_data.items():
-            if page_id is None:
-                curr_item_id = item_id
-            else:
-                curr_item_id = page_id
             prepared_list = []
             for val in desc_list:
                 value = val.get("description")
-                desc, desc_keys = self._prepare_description(curr_item_id, value)
+                desc, desc_keys = self._prepare_description(value)
                 prepared_list.append((val, desc, desc_keys))
             model_texts[item_id] = prepared_list
         return model_texts
 
-    def _prepare_dictionary_item_descr(self, page_id=None):
+    def _prepare_dictionary_item_descr(self):
         def_texts = {}
         defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
         for keyword, keyword_data_list in defs_dict.items():
@@ -197,78 +118,12 @@ label {{
                 if not def_text:
                     prepared_list.append(None)
                     continue
-                def_desc, def_keys = self._prepare_description(page_id, def_text)
+                def_desc, def_keys = self._prepare_description(def_text)
                 prepared_list.append((def_text, def_desc, def_keys))
             def_texts[keyword] = prepared_list
         return def_texts
 
-    def _generate_index_page(self):
-        self.out_index_path = os.path.join(self.out_root_dir, "index.html")
-        self.page_id = self._create_page_id(self.out_index_path)
-
-        model = self.data_loader.model_data
-        model_start = model.get("start")
-
-        page_title = self.data_loader.get_model_title()
-
-        ## main/index page
-        content = ""
-
-        if not self.singlepagemode:
-            css_content = self._prepare_css(self.out_root_dir)
-            images_content = self._prepare_images_content()  ## no keywords
-
-            content += f"""\
-<!DOCTYPE html>
-<html>
-{HTML_LICENSE}
-
-<head>
-    <title>{page_title}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    {css_content}
-    {images_content}
-</head>
-<body>
-"""
-
-        model_desc = self.data_loader.get_model_description()
-
-        start_link = self._gen_link(self.out_root_dir, f"page/{model_start}.html", "Start")
-        species_link = self._gen_link(self.out_root_dir, "species.html", "Species")
-        dictionary_link = self._gen_link(self.out_root_dir, "dictionary.html", "Dictionary")
-
-        content += f"""
-<div class="main_section title">{page_title}</div>
-
-<div class="main_section description">
-    {model_desc}
-</div>
-
-<div class="main_section">
-    {start_link}
-</div>
-
-<div class="main_section">
-    {species_link}
-</div>
-
-<div class="main_section">
-    {dictionary_link}
-</div>
-"""
-        if not self.singlepagemode:
-            content += """
-</body>
-</html>
-"""
-        self._store_content(self.out_index_path, content)
-
-        if not self.embedcss:
-            css_styles_path = os.path.join(DATA_DIR, "styles.css")
-            shutil.copy(css_styles_path, self.out_root_dir, follow_symlinks=True)
-
-    def _prepare_css(self, page_dir):
+    def prepare_css(self, page_dir):
         if not self.embedcss:
             css_target_path = os.path.join(self.out_root_dir, "styles.css")
             css_rel_path = os.path.relpath(css_target_path, page_dir)
@@ -283,53 +138,7 @@ label {{
 """
         return page_script_content
 
-    def _generate_model_page(self, item_id):
-        page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
-        self.page_id = self._create_page_id(page_path)
-
-        page_content, keywords_list = self._prepare_model_subpage_content(item_id)
-
-        page_title = self.data_loader.get_model_title()
-
-        ## characteristic page
-        content = ""
-
-        if not self.singlepagemode:
-            css_content = self._prepare_css(self.out_page_dir)
-            images_list = self._get_image_paths_from_defs(keywords_list)
-            images_content = self._prepare_images_content(images_list)
-
-            content += f"""\
-<!DOCTYPE html>
-<html>
-{HTML_LICENSE}
-
-<head>
-    <title>{page_title} - characteristics</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    {css_content}
-    {images_content}
-</head>
-<body>
-"""
-        content += f"""
-<div class="main_section title">{page_title}</div>
-
-"""
-
-        ## generate content
-        prev_content = self._prepare_back_to(self.out_page_dir, item_id)
-        content += prev_content + "\n"
-        content += page_content
-
-        if not self.singlepagemode:
-            content += """
-</body>
-</html>
-"""
-        self._store_content(page_path, content)
-
-    def _get_image_paths_from_defs(self, keywords_list: List[DefItem]):
+    def get_image_paths_from_defs(self, keywords_list: List[DefItem]):
         ret_list = []
         defs_dict = self.data_loader.get_defs_dict()
         for keyword_def in keywords_list:
@@ -344,78 +153,8 @@ label {{
         ret_list.sort()
         return ret_list
 
-    def _prepare_model_subpage_content(self, item_id) -> Tuple[str, List[DefItem]]:
-        model = self.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
-        desc_list = model_data[item_id]
-        columns_num = len(desc_list)
-
-        content = ""
-
-        graph_content = self._prepare_tree_graph(item_id)
-        content += graph_content
-
-        content += """\n<div class="characteristic_section">\n"""
-        table_content = """<table>\n"""
-
-        ## title row
-        table_content += (
-            f"""<tr class="title_row"> <th colspan="{columns_num}">Characteristic {item_id}:</th> </tr>\n"""
-        )
-
-        ## description row
-        model_texts = self._prepare_model_item_descr()
-        prepare_desc_list = model_texts[item_id]
-        char_keywords = set()
-        table_content += "<tr>"
-        for prep_data in prepare_desc_list:
-            _value, desc, desc_keys = prep_data
-            char_keywords.update(desc_keys)
-            table_content += f"""\n   <td>{desc}</td>"""
-        table_content += "\n</tr>\n"
-        keywords_list: List[DefItem] = list(char_keywords)
-
-        ## "next" row
-        table_content += """<tr class="navigation_row"> """
-        for val in desc_list:
-            next_id = val.get("next")
-            if next_id:
-                next_data = self._gen_link(self.out_page_dir, f"{next_id}.html", f"next: {next_id}", "next_char")
-                table_content += f"""<td>{next_data}</td> """
-            else:
-                target = val.get("target")
-                if target:
-                    target_label = target[0]
-                    item_low = prepare_filename(target_label)
-                    next_data = self._gen_link(self.out_page_dir, f"{item_low}.html", target_label, "next_char")
-                    table_content += f"""<td>{next_data}</td> """
-                else:
-                    table_content += """<td>--- unknown ---</td> """
-        table_content += "</tr>\n"
-
-        ## potential species row
-        potential_content = self._prepare_potential_species(desc_list)
-        if potential_content:
-            table_content += potential_content
-
-        table_content += """</table>\n"""
-        table_content = table_content.replace("\n", "\n    ")
-        table_content = table_content.strip()
-        table_content = "    " + table_content
-        content += table_content
-        content += """\n</div>\n"""
-
-        ## keywords row
-        if keywords_list:
-            keywords_list = self._get_related_keywords(item_id, keywords_list)
-            content += """\n<div class="keywords_section">\n"""
-            content += self._prepare_defs_table(item_id, keywords_list, self.out_page_dir)
-            content += """\n</div>\n"""
-
-        return content, keywords_list
-
-    def get_def_photo_path(self, source_def_path):
-        base_path = get_path_components(source_def_path, 2)  ## filename with dir name
+    def prepare_photo_dest_path(self, source_path):
+        base_path = get_path_components(source_path, 2)  ## filename with dir name
         base_path = prepare_filename(base_path)
         dest_img_path = os.path.join(self.out_img_dir, base_path)
         return dest_img_path
@@ -423,7 +162,7 @@ label {{
     def _prepare_img(self, photo_path, page_dir):
         if not photo_path:
             return None
-        dest_img_path = self.get_def_photo_path(photo_path)
+        dest_img_path = self.prepare_photo_dest_path(photo_path)
         if not dest_img_path:
             return None
 
@@ -443,45 +182,7 @@ label {{
         image_id = prepare_image_id(img_rel_path)
         return f"""<div class="image {image_id}"></div>"""
 
-    def _prepare_potential_species(self, desc_list):
-        columns_num = len(desc_list)
-
-        potential_content = ""
-        potential_content += f"""<tr class="title_row"> <td colspan="{columns_num}">Potential species:</td> </tr>\n"""
-        potential_content += """<tr class="species_row">"""
-        potential_species_dict = self.data_loader.potential_species
-        found_potential = False
-        for val in desc_list:
-            next_species = []
-            next_id = val.get("next")
-            if next_id:
-                next_species = potential_species_dict.get(next_id)
-            # else:
-            #     target = val.get("target")
-            #     if target:
-            #         next_species.append( target[0] )
-            if next_species:
-                found_potential = True
-                next_species.sort()
-                list_content = ["<ul>\n"]
-                for item in next_species:
-                    item_low = prepare_filename(item)
-                    a_href = self._gen_link(self.out_page_dir, f"{item_low}.html", item)
-                    list_content.append(f"        <li>{a_href}</li>\n")
-                list_content.append("        </ul>")
-                list_str = "".join(list_content)
-                potential_content += f"""\n    <td>{list_str}\n    </td>"""
-                continue
-
-            ## no species found
-            potential_content += """<td></td> """
-        potential_content += "\n</tr>\n"
-
-        if found_potential:
-            return potential_content
-        return None
-
-    def _prepare_description(self, page_id, description) -> Tuple[str, List[DefItem]]:
+    def _prepare_description(self, description) -> Tuple[str, List[DefItem]]:
         description_defs_list: List[DefItem] = self.data_loader.get_all_defs()
         ret_descr = description
         ret_keywords: List[DefItem] = []
@@ -497,7 +198,7 @@ label {{
             end_pos = pos + def_len
 
             wrap_content = ret_descr[pos:end_pos]
-            wrap_content = self._gen_link(None, f"#{page_id}_{def_keyword}", wrap_content, "def_item")
+            wrap_content = self.gen_link(None, f"#{self.page_id}_{def_keyword}", wrap_content, "def_item")
             ret_descr = ret_descr[:pos] + wrap_content + ret_descr[end_pos:]
 
             # ## add suffix to def
@@ -509,247 +210,7 @@ label {{
 
         return ret_descr, ret_keywords
 
-    def _generate_species_index_page(self):
-        page_path = os.path.join(self.out_root_dir, "species.html")
-        self.page_id = self._create_page_id(page_path)
-
-        page_title = self.data_loader.get_model_title()
-
-        ## species list page
-        content = ""
-
-        if not self.singlepagemode:
-            css_content = self._prepare_css(self.out_root_dir)
-            images_content = self._prepare_images_content()  ## no keywords
-
-            content += f"""\
-<!DOCTYPE html>
-<html>
-{HTML_LICENSE}
-
-<head>
-    <title>{page_title} - species</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    {css_content}
-    {images_content}
-</head>
-<body>
-"""
-        content += f"""
-<div class="main_section title">{page_title}</div>
-
-"""
-
-        ## generate content
-        prev_content = self._prepare_back_to(self.out_root_dir)
-        content += prev_content + "\n"
-
-        content += """\n<div class="main_section">List of species included in the key:</div>\n"""
-
-        species_set = set()
-        potential_species_dict = self.data_loader.potential_species
-        for char_species_list in potential_species_dict.values():
-            species_set.update(char_species_list)
-        species_list = list(species_set)
-        species_list.sort()
-
-        list_content = ["""\n<ul class="species_list">\n"""]
-        for species in species_list:
-            item_low = prepare_filename(species)
-            a_href = self._gen_link(self.out_root_dir, f"page/{item_low}.html", species)
-            list_content.append(f"    <li>{a_href}</li>\n")
-        list_content.append("</ul>\n")
-        list_str = "".join(list_content)
-        content += list_str
-
-        if not self.singlepagemode:
-            content += """
-</body>
-</html>
-"""
-        self._store_content(page_path, content)
-
-    def _generate_species_page(self, species_id):
-        species_id_low = prepare_filename(species_id)
-        page_path = os.path.join(self.out_page_dir, f"{species_id_low}.html")
-        self.page_id = self._create_page_id(page_path)
-
-        prev_list = self.data_loader.nav_dict.prev_items_list(species_id)
-
-        ## characteristics list
-        model_texts = self._prepare_model_item_descr(species_id_low)
-        char_keywords = set()
-        characteristic_content = """<ul class="characteristic_list">\n"""
-        for prev_item in prev_list:
-            prev_id = prev_item[0]
-            prev_desc_index = prev_item[1]
-            prev_data = model_texts[prev_id]
-            prev_desc_item = prev_data[prev_desc_index]
-            _prev_desc, desc, desc_keys = prev_desc_item
-            char_keywords.update(desc_keys)
-            char_link = self._gen_link(self.out_page_dir, f"{prev_id}.html", prev_id)
-            characteristic_content += f"""<li>{char_link}: {desc}</li>\n"""
-        characteristic_content += "</ul>\n"
-        keywords_list: List[DefItem] = list(char_keywords)
-
-        ## keywords row
-        if keywords_list:
-            keywords_list = self._get_related_keywords(species_id, keywords_list)
-            characteristic_content += """\n<div class="keywords_section">\n"""
-            characteristic_content += self._prepare_defs_table(species_id_low, keywords_list, self.out_page_dir)
-            characteristic_content += """\n</div>\n"""
-
-        last_item = prev_list[-1]
-        species_target = self.data_loader.get_target(*last_item)
-        species_name = species_target[0]
-
-        page_title = self.data_loader.get_model_title()
-
-        ## species page
-        content = ""
-
-        if not self.singlepagemode:
-            css_content = self._prepare_css(self.out_page_dir)
-            images_list = self._get_image_paths_from_defs(keywords_list)
-            images_content = self._prepare_images_content(images_list)
-
-            content += f"""\
-<!DOCTYPE html>
-<html>
-{HTML_LICENSE}
-
-<head>
-    <title>{page_title} - {species_name}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    {css_content}
-    {images_content}
-</head>
-<body>
-"""
-        content += f"""
-<div class="main_section title">{page_title}</div>
-
-"""
-
-        ## generate content
-        prev_content = self._prepare_back_to(self.out_page_dir, species_id)
-        content += prev_content + "\n"
-
-        graph_content = self._prepare_tree_graph(species_id)
-        content += graph_content
-
-        content += f"""\n<div class="title_row main_section">{species_name}</div>\n"""
-        info_url = species_target[1]
-        if info_url:
-            content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>\n"""
-            # a_link = self._gen_link(self.out_page_dir, info_url, info_url)
-            # content += f"""<div>Info: {a_link}</div>\n"""
-
-        content += characteristic_content
-
-        if not self.singlepagemode:
-            content += """
-</body>
-</html>
-"""
-        self._store_content(page_path, content)
-
-    def _prepare_tree_graph(self, active_item_id):
-        add_href = True
-        if self.singlepagemode:
-            # TODO: fix (it requires use of Java script to change CSS dynamically)
-            add_href = False
-        data_graph = generate_graph(self.data_loader, active_item_id, add_href=add_href)
-        svg_content = get_graph_svg(data_graph)
-
-        ## remove defined 'width' and 'height' - attributes corrupts image placement
-        svg_content = re.sub(r'<svg\s+width="\d+\S+"\s+height="\d+\S+"', "<svg", svg_content)
-        svg_content = svg_content.replace("\n", "\n    ")
-        svg_content = svg_content.strip()
-        svg_content = "    " + svg_content
-
-        if self.singlepagemode:
-            ## make unique items
-            svg_content = svg_content.replace('<g id="', f'<g id="{active_item_id}_')
-            ## remove links
-            # svg_content = re.sub(r'<a xlink:href="[\S ]+" xlink:title="[\S ]+">', "xxx", svg_content)
-            # svg_content = re.sub(r'</a>', "", svg_content)
-
-        return f"""
-<div class="graph_section">
-{svg_content}
-</div>
-"""
-
-    def _generate_dictionary_page(self):
-        page_path = os.path.join(self.out_root_dir, "dictionary.html")
-        self.page_id = self._create_page_id(page_path)
-
-        keywords_list = self._get_all_keywords("dict_html")
-        page_title = self.data_loader.get_model_title()
-
-        ## dictionary page
-        content = ""
-
-        if not self.singlepagemode:
-            css_content = self._prepare_css(self.out_root_dir)
-            images_list = self._get_image_paths_from_defs(keywords_list)
-            images_content = self._prepare_images_content(images_list)
-
-            content += f"""\
-<!DOCTYPE html>
-<html>
-{HTML_LICENSE}
-
-<head>
-    <title>{page_title} - dictionary</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    {css_content}
-    {images_content}
-</head>
-<body>
-"""
-        content += f"""
-<div class="main_section title">{page_title}</div>
-
-"""
-
-        ## generate content
-        prev_content = self._prepare_back_to(self.out_root_dir)
-        content += prev_content + "\n"
-
-        content += (
-            """\n<div class="main_section">Explanation of some definitions used in the characteristics.</div>\n"""
-        )
-
-        ## copy images
-        if not self.embedimages:
-            defs_dict = self.data_loader.get_defs_dict()
-            for keyword_def in keywords_list:
-                keyword = keyword_def.defvalue
-                keyword_data_list = defs_dict[keyword]
-                for keyword_item in keyword_data_list:
-                    photo_path = keyword_item.get("image")
-                    if not photo_path:
-                        continue
-                    dest_img_path = self.get_def_photo_path(photo_path)
-                    if dest_img_path:
-                        copy_image(photo_path, dest_img_path, resize=False)
-
-        keywords_content = self._prepare_defs_table("dict_html", keywords_list, self.out_root_dir)
-        if keywords_content:
-            content += """\n<div class="keywords_section">\n"""
-            content += keywords_content
-            content += """\n</div>\n"""
-
-        if not self.singlepagemode:
-            content += """
-</body>
-</html>
-"""
-        self._store_content(page_path, content)
-
-    def _prepare_images_content(self, source_image_path_list=None):
+    def prepare_images_css(self, source_image_path_list=None):
         if not self.embedimages:
             return ""
         if not source_image_path_list:
@@ -760,7 +221,7 @@ label {{
 
         img_class_list = []
         for photo_path in source_image_path_list:
-            dest_img_path = self.get_def_photo_path(photo_path)
+            dest_img_path = self.prepare_photo_dest_path(photo_path)
             if not dest_img_path:
                 continue
             img_rel_path = os.path.relpath(dest_img_path, self.out_img_dir)
@@ -801,8 +262,8 @@ label {{
 """
         return page_script_content
 
-    def _get_all_keywords(self, page_id):
-        model_texts = self._prepare_model_item_descr()
+    def get_all_keywords(self):
+        model_texts = self.prepare_model_item_descr()
         keywords_list = []
         for prepare_desc_list in model_texts.values():
             for prep_data in prepare_desc_list:
@@ -810,40 +271,59 @@ label {{
                     continue
                 _desc_raw, _desc, desc_keys = prep_data
                 keywords_list.extend(desc_keys)
-        keywords_list = self._get_related_keywords(page_id, keywords_list)
+        keywords_list = self.get_related_keywords(keywords_list)
         return keywords_list
 
-    def _get_related_keywords(self, page_id, def_key_list: List[DefItem]) -> List[DefItem]:
-        def_key_list = self._append_keywords_in_defs(page_id, def_key_list)
+    def get_related_keywords(self, keywords_list: List[DefItem]) -> List[DefItem]:
+        def_texts = self._prepare_dictionary_item_descr()
+
+        ## extend keywords list
+        counter = 0
+        found_keywords = {item.defvalue for item in keywords_list}
+        while counter < len(keywords_list):
+            keyword_def = keywords_list[counter]
+            keyword = keyword_def.defvalue
+            counter += 1
+            keyword_data_list = def_texts[keyword]
+            for def_item in keyword_data_list:
+                if not def_item:
+                    continue
+                _def_raw, _def_desc, def_keys = def_item
+                for item in def_keys:
+                    if item.defvalue not in found_keywords:
+                        found_keywords.add(item.defvalue)
+                        keywords_list.append(item)
+        def_key_list = sorted(list(set(keywords_list)), key=lambda x: x.defvalue.lower())
+
         ## remove duplicates
         def_key_list = list({item.defvalue: item for item in def_key_list}.values())
         def_key_list.sort(key=lambda x: x.get_label().lower())
         return def_key_list
 
-    def _prepare_back_to(self, subpage_dir, item_id=None):
+    def prepare_back_to(self, subpage_dir, model_item_id=None):
         main_page_rel_path = os.path.relpath(self.out_index_path, subpage_dir)
         prev_content = """<div class="main_section">Back to: """
-        back_link = self._gen_link(subpage_dir, main_page_rel_path, self.label_back_to_main)
+        back_link = self.gen_link(subpage_dir, main_page_rel_path, LABEL_BACK_TO_MAIN)
         link_list = [back_link]
 
-        if item_id:
+        if model_item_id:
             nav_dict = self.data_loader.nav_dict
-            prev_items = nav_dict.prev_id_list(item_id)
+            prev_items = nav_dict.prev_id_list(model_item_id)
             if prev_items:
                 for prev in prev_items:
-                    item = self._gen_link(subpage_dir, f"{prev}.html", prev)
+                    item = self.gen_link(subpage_dir, f"{prev}.html", prev)
                     link_list.append(item)
 
         prev_content += " | ".join(link_list)
         prev_content += "</div>"
         return prev_content
 
-    def _prepare_defs_table(self, page_id, keywords_list: List[DefItem], page_dir):  # pylint: disable=R0914
+    def prepare_defs_table(self, keywords_list: List[DefItem], page_dir):  # pylint: disable=R0914
         if not keywords_list:
             return None
 
         ## prepare "mentioned" list
-        model_texts = self._prepare_model_item_descr()
+        model_texts = self.prepare_model_item_descr()
         model_item_keys = {}
         for item_id, prep_desc_list in model_texts.items():
             item_keys = []
@@ -852,7 +332,7 @@ label {{
                 item_keys.extend([item.defvalue for item in desc_keys])
             model_item_keys[item_id] = item_keys
 
-        def_texts = self._prepare_dictionary_item_descr(page_id)
+        def_texts = self._prepare_dictionary_item_descr()
 
         defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
         keywords_content = ""
@@ -861,7 +341,7 @@ label {{
         for keyword_def in keywords_list:
             keyword = keyword_def.defvalue
             keyword_label = keyword_def.get_label()
-            def_name_id = prepare_page_id(f"{page_id}_{keyword}")
+            def_name_id = prepare_page_id(f"{self.page_id}_{keyword}")
             single_keyword_content = f"""<tr class="def_row">
     <td class="def_item"><a name="{def_name_id}"></a>{keyword_label}</td>\n"""
             single_keyword_content += """    <td> """
@@ -893,7 +373,7 @@ label {{
                     if keyword in item_desc_keys:
                         item_path = os.path.join(self.out_page_dir, f"{item_id}.html")
                         item_rel_path = os.path.relpath(item_path, page_dir)
-                        item_link = self._gen_link(page_dir, item_rel_path, item_id)
+                        item_link = self.gen_link(page_dir, item_rel_path, item_id)
                         mentioned_list.append(item_link)
                 if mentioned_list:
                     items_str = " ".join(mentioned_list)
@@ -910,28 +390,7 @@ label {{
 
         return keywords_content
 
-    def _append_keywords_in_defs(self, page_id, keywords_list: List[DefItem]):
-        def_texts = self._prepare_dictionary_item_descr(page_id)
-
-        counter = 0
-        found_keywords = {item.defvalue for item in keywords_list}
-        while counter < len(keywords_list):
-            keyword_def = keywords_list[counter]
-            keyword = keyword_def.defvalue
-            counter += 1
-            keyword_data_list = def_texts[keyword]
-            for def_item in keyword_data_list:
-                if not def_item:
-                    continue
-                _def_raw, _def_desc, def_keys = def_item
-                for item in def_keys:
-                    if item.defvalue not in found_keywords:
-                        found_keywords.add(item.defvalue)
-                        keywords_list.append(item)
-        keywords_list = sorted(list(set(keywords_list)), key=lambda x: x.defvalue.lower())
-        return keywords_list
-
-    def _gen_link(self, from_dir_path, target_subpath, label, a_class=None):
+    def gen_link(self, from_dir_path, target_subpath, label, a_class=None):
         class_attr = ""
         if a_class:
             class_attr = f""" class="{a_class}" """
@@ -951,7 +410,7 @@ label {{
 
         ## single page mode
         target_path = os.path.join(from_dir_path, target_subpath)
-        page_id = self._create_page_id(target_path)
+        page_id = self.create_page_id(target_path)
         return f"""<label for="{page_id}"{class_attr} onclick="window.scrollTo(0, 0);">{label}</label>"""
 
         ## does not work - link not activated
@@ -960,14 +419,12 @@ label {{
         ## does not work - label is not activated
         # return f"""<label for="{page_id}"><a href="#{page_id}_top_pos"{class_attr}>{label}</a></label>"""
 
-    def _create_page_id(self, page_path):
+    def create_page_id(self, page_path):
         target_subpath = os.path.realpath(page_path)
         rel_target = os.path.relpath(target_subpath, self.out_root_dir)
-        page_id = prepare_page_id(rel_target)
-        page_id = f"""pageno-{page_id}"""
-        return page_id
+        return prepare_page_id(rel_target)
 
-    def _store_content(self, page_path, content):
+    def store_content(self, page_path, content):
         self.page_counter += 1
         progress = self.page_counter / self.total_count * 100
         # progress = int(self.page_counter / self.total_count * 10000) / 100
@@ -982,8 +439,7 @@ label {{
         page_rel_path = os.path.relpath(page_path, self.out_root_dir)
         if page_rel_path == "index.html":
             checked_attr = """ checked="checked" """
-        page_id = prepare_page_id(page_rel_path)
-        page_id = f"""pageno-{page_id}"""
+        page_id = self.create_page_id(page_path)
 
         content = content.replace("\n", "\n    ")
         content = content.strip()
@@ -996,6 +452,602 @@ label {{
 </div>
 </div>
 """
+
+
+## ===========================================================================================
+
+
+class PageIndexGenerator:
+
+    def __init__(self, static_generator: BaseGenerator):  # noqa: F811
+        self.static_gen: BaseGenerator = static_generator
+
+    def generate(self):
+        self.static_gen.out_index_path = os.path.join(self.static_gen.out_root_dir, "index.html")
+        self.static_gen.page_id = self.static_gen.create_page_id(self.static_gen.out_index_path)
+
+        model = self.static_gen.data_loader.model_data
+        model_start = model.get("start")
+
+        page_title = self.static_gen.data_loader.get_model_title()
+
+        ## main/index page
+        content = ""
+
+        if not self.static_gen.singlepagemode:
+            css_content = self.static_gen.prepare_css(self.static_gen.out_root_dir)
+            images_content = self.static_gen.prepare_images_css()  ## no keywords
+
+            content += f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
+    {images_content}
+</head>
+<body>
+"""
+
+        model_desc = self.static_gen.data_loader.get_model_description()
+
+        start_link = self.static_gen.gen_link(self.static_gen.out_root_dir, f"page/{model_start}.html", "Start")
+        species_link = self.static_gen.gen_link(self.static_gen.out_root_dir, "species.html", "Species")
+        dictionary_link = self.static_gen.gen_link(self.static_gen.out_root_dir, "dictionary.html", "Dictionary")
+
+        content += f"""
+<div class="main_section title">{page_title}</div>
+
+<div class="main_section description">
+    {model_desc}
+</div>
+
+<div class="main_section">
+    {start_link}
+</div>
+
+<div class="main_section">
+    {species_link}
+</div>
+
+<div class="main_section">
+    {dictionary_link}
+</div>
+"""
+        if not self.static_gen.singlepagemode:
+            content += """
+</body>
+</html>
+"""
+        self.static_gen.store_content(self.static_gen.out_index_path, content)
+
+        if not self.static_gen.embedcss:
+            css_styles_path = os.path.join(DATA_DIR, "styles.css")
+            shutil.copy(css_styles_path, self.static_gen.out_root_dir, follow_symlinks=True)
+
+
+## ===========================================================================================
+
+
+class PageModelGenerator:
+
+    def __init__(self, static_generator: BaseGenerator):  # noqa: F811
+        self.static_gen: BaseGenerator = static_generator
+
+    def generate(self):
+        model = self.static_gen.data_loader.model_data
+        model_data: Dict[str, Any] = model.get("data", {})
+
+        ## prepare characteristic pages
+        for item_id in model_data:
+            self._generate_item(item_id)
+
+        ## prepare species pages
+        all_species = self.static_gen.data_loader.get_all_leafs()
+        for item_id in all_species:
+            self._generate_leaf(item_id)
+
+    def _generate_item(self, item_id):
+        page_path = os.path.join(self.static_gen.out_page_dir, f"{item_id}.html")
+        self.static_gen.page_id = self.static_gen.create_page_id(page_path)
+
+        page_content, keywords_list = self._prepare_model_subpage_content(item_id)
+
+        page_title = self.static_gen.data_loader.get_model_title()
+
+        ## characteristic page
+        content = ""
+
+        if not self.static_gen.singlepagemode:
+            css_content = self.static_gen.prepare_css(self.static_gen.out_page_dir)
+            images_list = self.static_gen.get_image_paths_from_defs(keywords_list)
+            images_content = self.static_gen.prepare_images_css(images_list)
+
+            content += f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title} - characteristics</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
+    {images_content}
+</head>
+<body>
+"""
+        content += f"""
+<div class="main_section title">{page_title}</div>
+
+"""
+
+        ## generate content
+        prev_content = self.static_gen.prepare_back_to(self.static_gen.out_page_dir, item_id)
+        content += prev_content + "\n"
+        content += page_content
+
+        if not self.static_gen.singlepagemode:
+            content += """
+</body>
+</html>
+"""
+        self.static_gen.store_content(page_path, content)
+
+    def _prepare_model_subpage_content(self, model_item_id) -> Tuple[str, List[DefItem]]:
+        model = self.static_gen.data_loader.model_data
+        model_data: Dict[str, Any] = model.get("data", {})
+        desc_list = model_data[model_item_id]
+        columns_num = len(desc_list)
+
+        content = ""
+
+        graph_content = self._prepare_tree_graph(model_item_id)
+        content += graph_content
+
+        content += """\n<div class="characteristic_section">\n"""
+        table_content = """<table>\n"""
+
+        ## title row
+        table_content += (
+            f"""<tr class="title_row"> <th colspan="{columns_num}">Characteristic {model_item_id}:</th> </tr>\n"""
+        )
+
+        ## description row
+        model_texts = self.static_gen.prepare_model_item_descr()
+        prepare_desc_list = model_texts[model_item_id]
+        char_keywords = set()
+        table_content += "<tr>"
+        for prep_data in prepare_desc_list:
+            _value, desc, desc_keys = prep_data
+            char_keywords.update(desc_keys)
+            table_content += f"""\n   <td>{desc}</td>"""
+        table_content += "\n</tr>\n"
+        keywords_list: List[DefItem] = list(char_keywords)
+
+        ## "next" row
+        table_content += """<tr class="navigation_row"> """
+        for val in desc_list:
+            next_id = val.get("next")
+            if next_id:
+                next_data = self.static_gen.gen_link(
+                    self.static_gen.out_page_dir, f"{next_id}.html", f"next: {next_id}", "next_char"
+                )
+                table_content += f"""<td>{next_data}</td> """
+            else:
+                target = val.get("target")
+                if target:
+                    target_label = target[0]
+                    item_low = prepare_filename(target_label)
+                    next_data = self.static_gen.gen_link(
+                        self.static_gen.out_page_dir, f"{item_low}.html", target_label, "next_char"
+                    )
+                    table_content += f"""<td>{next_data}</td> """
+                else:
+                    table_content += """<td>--- unknown ---</td> """
+        table_content += "</tr>\n"
+
+        ## potential species row
+        potential_content = self._prepare_potential_species(desc_list)
+        if potential_content:
+            table_content += potential_content
+
+        table_content += """</table>\n"""
+        table_content = table_content.replace("\n", "\n    ")
+        table_content = table_content.strip()
+        table_content = "    " + table_content
+        content += table_content
+        content += """\n</div>\n"""
+
+        ## keywords row
+        if keywords_list:
+            keywords_list = self.static_gen.get_related_keywords(keywords_list)
+            content += """\n<div class="keywords_section">\n"""
+            content += self.static_gen.prepare_defs_table(keywords_list, self.static_gen.out_page_dir)
+            content += """\n</div>\n"""
+
+        return content, keywords_list
+
+    def _prepare_potential_species(self, desc_list):
+        columns_num = len(desc_list)
+
+        potential_content = ""
+        potential_content += f"""<tr class="title_row"> <td colspan="{columns_num}">Potential species:</td> </tr>\n"""
+        potential_content += """<tr class="species_row">"""
+        potential_species_dict = self.static_gen.data_loader.potential_species
+        found_potential = False
+        for val in desc_list:
+            next_species = []
+            next_id = val.get("next")
+            if next_id:
+                next_species = potential_species_dict.get(next_id)
+            # else:
+            #     target = val.get("target")
+            #     if target:
+            #         next_species.append( target[0] )
+            if next_species:
+                found_potential = True
+                next_species.sort()
+                list_content = ["<ul>\n"]
+                for item in next_species:
+                    item_low = prepare_filename(item)
+                    a_href = self.static_gen.gen_link(self.static_gen.out_page_dir, f"{item_low}.html", item)
+                    list_content.append(f"        <li>{a_href}</li>\n")
+                list_content.append("        </ul>")
+                list_str = "".join(list_content)
+                potential_content += f"""\n    <td>{list_str}\n    </td>"""
+                continue
+
+            ## no species found
+            potential_content += """<td></td> """
+        potential_content += "\n</tr>\n"
+
+        if found_potential:
+            return potential_content
+        return None
+
+    def _generate_leaf(self, model_item_id):
+        species_id_low = prepare_filename(model_item_id)
+        page_path = os.path.join(self.static_gen.out_page_dir, f"{species_id_low}.html")
+        self.static_gen.page_id = self.static_gen.create_page_id(page_path)
+
+        prev_list = self.static_gen.data_loader.nav_dict.prev_items_list(model_item_id)
+
+        ## characteristics list
+        model_texts = self.static_gen.prepare_model_item_descr()
+        char_keywords = set()
+        characteristic_content = """<ul class="characteristic_list">\n"""
+        for prev_item in prev_list:
+            prev_id = prev_item[0]
+            prev_desc_index = prev_item[1]
+            prev_data = model_texts[prev_id]
+            prev_desc_item = prev_data[prev_desc_index]
+            _prev_desc, desc, desc_keys = prev_desc_item
+            char_keywords.update(desc_keys)
+            char_link = self.static_gen.gen_link(self.static_gen.out_page_dir, f"{prev_id}.html", prev_id)
+            characteristic_content += f"""<li>{char_link}: {desc}</li>\n"""
+        characteristic_content += "</ul>\n"
+        keywords_list: List[DefItem] = list(char_keywords)
+
+        ## keywords row
+        if keywords_list:
+            keywords_list = self.static_gen.get_related_keywords(keywords_list)
+            characteristic_content += """\n<div class="keywords_section">\n"""
+            characteristic_content += self.static_gen.prepare_defs_table(keywords_list, self.static_gen.out_page_dir)
+            characteristic_content += """\n</div>\n"""
+
+        last_item = prev_list[-1]
+        species_target = self.static_gen.data_loader.get_target(*last_item)
+        species_name = species_target[0]
+
+        page_title = self.static_gen.data_loader.get_model_title()
+
+        ## species page
+        content = ""
+
+        if not self.static_gen.singlepagemode:
+            css_content = self.static_gen.prepare_css(self.static_gen.out_page_dir)
+            images_list = self.static_gen.get_image_paths_from_defs(keywords_list)
+            images_content = self.static_gen.prepare_images_css(images_list)
+
+            content += f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title} - {species_name}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
+    {images_content}
+</head>
+<body>
+"""
+        content += f"""
+<div class="main_section title">{page_title}</div>
+
+"""
+
+        ## generate content
+        prev_content = self.static_gen.prepare_back_to(self.static_gen.out_page_dir, model_item_id)
+        content += prev_content + "\n"
+
+        graph_content = self._prepare_tree_graph(model_item_id)
+        content += graph_content
+
+        content += f"""\n<div class="title_row main_section">{species_name}</div>\n"""
+        info_url = species_target[1]
+        if info_url:
+            content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>\n"""
+            # a_link = self.static_gen.gen_link(self.static_gen.out_page_dir, info_url, info_url)
+            # content += f"""<div>Info: {a_link}</div>\n"""
+
+        content += characteristic_content
+
+        if not self.static_gen.singlepagemode:
+            content += """
+</body>
+</html>
+"""
+        self.static_gen.store_content(page_path, content)
+
+    def _prepare_tree_graph(self, active_item_id):
+        add_href = True
+        if self.static_gen.singlepagemode:
+            # TODO: fix (it requires use of Java script to change CSS dynamically)
+            add_href = False
+        data_graph = generate_graph(self.static_gen.data_loader, active_item_id, add_href=add_href)
+        svg_content = get_graph_svg(data_graph)
+
+        ## remove defined 'width' and 'height' - attributes corrupts image placement
+        svg_content = re.sub(r'<svg\s+width="\d+\S+"\s+height="\d+\S+"', "<svg", svg_content)
+        svg_content = svg_content.replace("\n", "\n    ")
+        svg_content = svg_content.strip()
+        svg_content = "    " + svg_content
+
+        if self.static_gen.singlepagemode:
+            ## make unique items
+            svg_content = svg_content.replace('<g id="', f'<g id="{active_item_id}_')
+            ## remove links
+            # svg_content = re.sub(r'<a xlink:href="[\S ]+" xlink:title="[\S ]+">', "xxx", svg_content)
+            # svg_content = re.sub(r'</a>', "", svg_content)
+
+        return f"""
+<div class="graph_section">
+{svg_content}
+</div>
+"""
+
+
+## ===========================================================================================
+
+
+class PageSpeciesIndexGenerator:
+
+    def __init__(self, static_generator: BaseGenerator):  # noqa: F811
+        self.static_gen: BaseGenerator = static_generator
+
+    def generate(self):
+        page_path = os.path.join(self.static_gen.out_root_dir, "species.html")
+        self.static_gen.page_id = self.static_gen.create_page_id(page_path)
+
+        page_title = self.static_gen.data_loader.get_model_title()
+
+        ## species list page
+        content = ""
+
+        if not self.static_gen.singlepagemode:
+            css_content = self.static_gen.prepare_css(self.static_gen.out_root_dir)
+            images_content = self.static_gen.prepare_images_css()  ## no keywords
+
+            content += f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title} - species</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
+    {images_content}
+</head>
+<body>
+"""
+        content += f"""
+<div class="main_section title">{page_title}</div>
+
+"""
+
+        ## generate content
+        prev_content = self.static_gen.prepare_back_to(self.static_gen.out_root_dir)
+        content += prev_content + "\n"
+
+        content += """\n<div class="main_section">List of species included in the key:</div>\n"""
+
+        species_set = set()
+        potential_species_dict = self.static_gen.data_loader.potential_species
+        for char_species_list in potential_species_dict.values():
+            species_set.update(char_species_list)
+        species_list = list(species_set)
+        species_list.sort()
+
+        list_content = ["""\n<ul class="species_list">\n"""]
+        for species in species_list:
+            item_low = prepare_filename(species)
+            a_href = self.static_gen.gen_link(self.static_gen.out_root_dir, f"page/{item_low}.html", species)
+            list_content.append(f"    <li>{a_href}</li>\n")
+        list_content.append("</ul>\n")
+        list_str = "".join(list_content)
+        content += list_str
+
+        if not self.static_gen.singlepagemode:
+            content += """
+</body>
+</html>
+"""
+        self.static_gen.store_content(page_path, content)
+
+
+## ===========================================================================================
+
+
+class PageDictionaryGenerator:
+
+    def __init__(self, static_generator: BaseGenerator):  # noqa: F811
+        self.static_gen: BaseGenerator = static_generator
+
+    def generate(self):
+        page_path = os.path.join(self.static_gen.out_root_dir, "dictionary.html")
+        self.static_gen.page_id = self.static_gen.create_page_id(page_path)
+
+        keywords_list = self.static_gen.get_all_keywords()
+        page_title = self.static_gen.data_loader.get_model_title()
+
+        ## dictionary page
+        content = ""
+
+        if not self.static_gen.singlepagemode:
+            css_content = self.static_gen.prepare_css(self.static_gen.out_root_dir)
+            images_list = self.static_gen.get_image_paths_from_defs(keywords_list)
+            images_content = self.static_gen.prepare_images_css(images_list)
+
+            content += f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title} - dictionary</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {css_content}
+    {images_content}
+</head>
+<body>
+"""
+        content += f"""
+<div class="main_section title">{page_title}</div>
+
+"""
+
+        ## generate content
+        prev_content = self.static_gen.prepare_back_to(self.static_gen.out_root_dir)
+        content += prev_content + "\n"
+
+        content += (
+            """\n<div class="main_section">Explanation of some definitions used in the characteristics.</div>\n"""
+        )
+
+        ## copy images
+        if not self.static_gen.embedimages:
+            defs_dict = self.static_gen.data_loader.get_defs_dict()
+            for keyword_def in keywords_list:
+                keyword = keyword_def.defvalue
+                keyword_data_list = defs_dict[keyword]
+                for keyword_item in keyword_data_list:
+                    photo_path = keyword_item.get("image")
+                    if not photo_path:
+                        continue
+                    dest_img_path = self.static_gen.prepare_photo_dest_path(photo_path)
+                    if dest_img_path:
+                        copy_image(photo_path, dest_img_path, resize=False)
+
+        keywords_content = self.static_gen.prepare_defs_table(keywords_list, self.static_gen.out_root_dir)
+        if keywords_content:
+            content += """\n<div class="keywords_section">\n"""
+            content += keywords_content
+            content += """\n</div>\n"""
+
+        if not self.static_gen.singlepagemode:
+            content += """
+</body>
+</html>
+"""
+        self.static_gen.store_content(page_path, content)
+
+
+## ===========================================================================================
+
+
+class StaticGenerator:
+
+    def __init__(self):  # noqa: F811
+        self.base_gen: BaseGenerator = None
+
+    def generate(self, data_loader: DataLoader, output_path, embedcss=False, embedimages=False, singlepagemode=False):
+        self.base_gen = BaseGenerator()
+        self.base_gen.embedcss = embedcss
+        self.base_gen.embedimages = embedimages
+        self.base_gen.singlepagemode = singlepagemode
+
+        self.base_gen.set_root_dir(output_path)
+
+        self.base_gen.data_loader = data_loader
+        self.base_gen.total_count = data_loader.get_total_count()
+        self.base_gen.total_count += 3  ## additional predefined pages
+
+        ## prepare index page
+        index_page_gen = PageIndexGenerator(self.base_gen)
+        index_page_gen.generate()
+
+        ## prepare model pages
+        model_page_gen = PageModelGenerator(self.base_gen)
+        model_page_gen.generate()
+
+        ## prepare species page
+        species_index_page_gen = PageSpeciesIndexGenerator(self.base_gen)
+        species_index_page_gen.generate()
+
+        ## prepare dictionary page
+        dict_page_gen = PageDictionaryGenerator(self.base_gen)
+        dict_page_gen.generate()
+
+        if self.base_gen.singlepagemode:
+            self._store_singlepage()
+
+    def _store_singlepage(self):
+        page_title = self.base_gen.data_loader.get_model_title()
+        css_content = self.base_gen.prepare_css(self.base_gen.out_root_dir)
+
+        keywords_list = self.base_gen.get_all_keywords()
+        images_list = self.base_gen.get_image_paths_from_defs(keywords_list)
+
+        images_content = self.base_gen.prepare_images_css(images_list)
+
+        content = self.base_gen.get_content()
+
+        content = f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+label {{
+    cursor: pointer;
+    color: blue;
+}}
+.page-selector, .page-content {{
+    display: none;
+}}
+.page-selector:checked ~ .page-content {{
+    display: block;
+}}
+    </style>
+    {css_content}
+    {images_content}
+</head>
+<body>
+
+{content}
+
+</body>
+</html>
+"""
+        write_data(self.base_gen.out_index_path, content)
 
 
 ## ===========================================================================================
