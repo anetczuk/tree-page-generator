@@ -31,10 +31,10 @@ _LOGGER = logging.getLogger(__name__)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
-def generate_pages(config_path, translation_path, output_path, embedcss=False, embedimages=False):
+def generate_pages(config_path, translation_path, output_path, embedcss=False, embedimages=False, singlepagemode=False):
     gen = StaticGenerator()
     data_loader = DataLoader(config_path, translation_path)
-    gen.generate(data_loader, output_path, embedcss=embedcss, embedimages=embedimages)
+    gen.generate(data_loader, output_path, embedcss=embedcss, embedimages=embedimages, singlepagemode=singlepagemode)
 
     # check_defs_repetitions(data_loader)
 
@@ -67,9 +67,11 @@ class StaticGenerator:
         self.out_page_dir = None
         self.out_img_dir = None
         self.out_index_path = None
+        self.page_id = None
 
         self.embedcss = False
         self.embedimages = False
+        self.singlepagemode = False
 
         self.label_back_to_main = "Main page"
         self.label_characteristic = "cecha"
@@ -77,12 +79,13 @@ class StaticGenerator:
 
         self.data_loader: DataLoader = None
 
-        self._model_texts = {}
-        self._def_texts = {}
+        ## buffer for single page mode
+        self._content = ""
 
-    def generate(self, data_loader: DataLoader, output_path, embedcss=False, embedimages=False):
+    def generate(self, data_loader: DataLoader, output_path, embedcss=False, embedimages=False, singlepagemode=False):
         self.embedcss = embedcss
         self.embedimages = embedimages
+        self.singlepagemode = singlepagemode
         self.page_counter = 0
 
         self.out_root_dir = output_path
@@ -100,7 +103,9 @@ class StaticGenerator:
         self.total_count = data_loader.get_total_count()
         self.total_count += 3  ## additional predefined pages
 
-        self._prepare_texts()
+        self.out_page_dir = os.path.join(self.out_root_dir, "page")
+        if not self.singlepagemode:
+            os.makedirs(self.out_page_dir, exist_ok=True)
 
         ## prepare index page
         self._generate_index_page()
@@ -120,48 +125,100 @@ class StaticGenerator:
         ## prepare dictionary page
         self._generate_dictionary_page()
 
-    def _prepare_texts(self):
-        self._model_texts = {}
-        self._def_texts = {}
+        if self.singlepagemode:
+            self._store_singlepage()
 
-        ## prepare model texts
+    def _store_singlepage(self):
+        page_title = self.data_loader.get_model_title()
+        css_content = self._prepare_css(self.out_root_dir)
+
+        keywords_list = self._get_all_keywords("singlepage_html")
+        images_list = self._get_image_paths_from_defs(keywords_list)
+
+        images_content = self._prepare_images_content(images_list)
+
+        self._content = f"""\
+<!DOCTYPE html>
+<html>
+{HTML_LICENSE}
+
+<head>
+    <title>{page_title}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+label {{
+    cursor: pointer;
+    color: blue;
+}}
+.page-selector, .page-content {{
+    display: none;
+}}
+.page-selector:checked ~ .page-content {{
+    display: block;
+}}
+    </style>
+    {css_content}
+    {images_content}
+</head>
+<body>
+
+{self._content}
+
+</body>
+</html>
+"""
+
+        write_data(self.out_index_path, self._content)
+
+    def _prepare_model_item_descr(self, page_id=None):
+        model_texts = {}
         model = self.data_loader.model_data
         model_data: Dict[str, Any] = model.get("data", {})
         for item_id, desc_list in model_data.items():
+            if page_id is None:
+                curr_item_id = item_id
+            else:
+                curr_item_id = page_id
             prepared_list = []
             for val in desc_list:
                 value = val.get("description")
-                desc, desc_keys = self._prepare_description(value)
+                desc, desc_keys = self._prepare_description(curr_item_id, value)
                 prepared_list.append((val, desc, desc_keys))
-            self._model_texts[item_id] = prepared_list
+            model_texts[item_id] = prepared_list
+        return model_texts
 
-        ## prepare dictionary texts
+    def _prepare_dictionary_item_descr(self, page_id=None):
+        def_texts = {}
         defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
         for keyword, keyword_data_list in defs_dict.items():
-            prepared_list = []
+            prepared_list: List[Any] = []
             for keyword_item in keyword_data_list:
                 def_text = keyword_item.get("text")
                 if not def_text:
                     prepared_list.append(None)
                     continue
-                def_desc, def_keys = self._prepare_description(def_text)
+                def_desc, def_keys = self._prepare_description(page_id, def_text)
                 prepared_list.append((def_text, def_desc, def_keys))
-            self._def_texts[keyword] = prepared_list
+            def_texts[keyword] = prepared_list
+        return def_texts
 
     def _generate_index_page(self):
+        self.out_index_path = os.path.join(self.out_root_dir, "index.html")
+        self.page_id = self._create_page_id(self.out_index_path)
+
         model = self.data_loader.model_data
         model_start = model.get("start")
-        self.out_index_path = os.path.join(self.out_root_dir, "index.html")
 
         page_title = self.data_loader.get_model_title()
-        model_desc = self.data_loader.get_model_description()
-
-        css_content = self._prepare_css(self.out_root_dir)
-        images_content = self._prepare_images_content()  ## no keywords
 
         ## main/index page
         content = ""
-        content += f"""\
+
+        if not self.singlepagemode:
+            css_content = self._prepare_css(self.out_root_dir)
+            images_content = self._prepare_images_content()  ## no keywords
+
+            content += f"""\
 <!DOCTYPE html>
 <html>
 {HTML_LICENSE}
@@ -172,29 +229,36 @@ class StaticGenerator:
     {css_content}
     {images_content}
 </head>
-
 <body>
 """
+
+        model_desc = self.data_loader.get_model_description()
+
+        start_link = self._gen_link(self.out_root_dir, f"page/{model_start}.html", "Start")
+        species_link = self._gen_link(self.out_root_dir, "species.html", "Species")
+        dictionary_link = self._gen_link(self.out_root_dir, "dictionary.html", "Dictionary")
+
         content += f"""
 <div class="main_section title">{page_title}</div>
 
 <div class="main_section description">
-{model_desc}
+    {model_desc}
 </div>
 
 <div class="main_section">
-<a href="page/{model_start}.html">Start</a>
+    {start_link}
 </div>
 
 <div class="main_section">
-<a href="species.html">Species</a>
+    {species_link}
 </div>
 
 <div class="main_section">
-<a href="dictionary.html">Dictionary</a>
+    {dictionary_link}
 </div>
 """
-        content += """
+        if not self.singlepagemode:
+            content += """
 </body>
 </html>
 """
@@ -203,9 +267,6 @@ class StaticGenerator:
         if not self.embedcss:
             css_styles_path = os.path.join(DATA_DIR, "styles.css")
             shutil.copy(css_styles_path, self.out_root_dir, follow_symlinks=True)
-
-        self.out_page_dir = os.path.join(self.out_root_dir, "page")
-        os.makedirs(self.out_page_dir, exist_ok=True)
 
     def _prepare_css(self, page_dir):
         if not self.embedcss:
@@ -224,17 +285,21 @@ class StaticGenerator:
 
     def _generate_model_page(self, item_id):
         page_path = os.path.join(self.out_page_dir, f"{item_id}.html")
+        self.page_id = self._create_page_id(page_path)
 
         page_content, keywords_list = self._prepare_model_subpage_content(item_id)
-        images_list = self._get_image_paths_from_defs(keywords_list)
 
         page_title = self.data_loader.get_model_title()
-        css_content = self._prepare_css(self.out_page_dir)
-        images_content = self._prepare_images_content(images_list)
 
         ## characteristic page
         content = ""
-        content += f"""\
+
+        if not self.singlepagemode:
+            css_content = self._prepare_css(self.out_page_dir)
+            images_list = self._get_image_paths_from_defs(keywords_list)
+            images_content = self._prepare_images_content(images_list)
+
+            content += f"""\
 <!DOCTYPE html>
 <html>
 {HTML_LICENSE}
@@ -245,7 +310,6 @@ class StaticGenerator:
     {css_content}
     {images_content}
 </head>
-
 <body>
 """
         content += f"""
@@ -257,7 +321,9 @@ class StaticGenerator:
         prev_content = self._prepare_back_to(self.out_page_dir, item_id)
         content += prev_content + "\n"
         content += page_content
-        content += """
+
+        if not self.singlepagemode:
+            content += """
 </body>
 </html>
 """
@@ -272,7 +338,10 @@ class StaticGenerator:
             for keyword_item in keyword_data_list:
                 photo_path = keyword_item.get("image")
                 if photo_path:
+                    photo_path = os.path.realpath(photo_path)
                     ret_list.append(photo_path)
+        ret_list = list(set(ret_list))
+        ret_list.sort()
         return ret_list
 
     def _prepare_model_subpage_content(self, item_id) -> Tuple[str, List[DefItem]]:
@@ -295,7 +364,8 @@ class StaticGenerator:
         )
 
         ## description row
-        prepare_desc_list = self._model_texts[item_id]
+        model_texts = self._prepare_model_item_descr()
+        prepare_desc_list = model_texts[item_id]
         char_keywords = set()
         table_content += "<tr>"
         for prep_data in prepare_desc_list:
@@ -310,14 +380,14 @@ class StaticGenerator:
         for val in desc_list:
             next_id = val.get("next")
             if next_id:
-                next_data = f"""<a href="{next_id}.html" class="next_char">next: {next_id}</a>"""
+                next_data = self._gen_link(self.out_page_dir, f"{next_id}.html", f"next: {next_id}", "next_char")
                 table_content += f"""<td>{next_data}</td> """
             else:
                 target = val.get("target")
                 if target:
                     target_label = target[0]
                     item_low = prepare_filename(target_label)
-                    next_data = f"""<a href="{item_low}.html" class="next_char">{target_label}</a>"""
+                    next_data = self._gen_link(self.out_page_dir, f"{item_low}.html", target_label, "next_char")
                     table_content += f"""<td>{next_data}</td> """
                 else:
                     table_content += """<td>--- unknown ---</td> """
@@ -337,9 +407,9 @@ class StaticGenerator:
 
         ## keywords row
         if keywords_list:
-            keywords_list = self._get_related_keywords(keywords_list)
+            keywords_list = self._get_related_keywords(item_id, keywords_list)
             content += """\n<div class="keywords_section">\n"""
-            content += self._prepare_defs_table(keywords_list, self.out_page_dir)
+            content += self._prepare_defs_table(item_id, keywords_list, self.out_page_dir)
             content += """\n</div>\n"""
 
         return content, keywords_list
@@ -358,7 +428,10 @@ class StaticGenerator:
             return None
 
         if not self.embedimages:
-            img_rel_path = os.path.relpath(dest_img_path, page_dir)
+            from_dir = page_dir
+            if self.singlepagemode:
+                from_dir = self.out_root_dir
+            img_rel_path = os.path.relpath(dest_img_path, from_dir)
             if not img_rel_path:
                 return None
             return f"""<img class="image" src="{img_rel_path}"/>"""
@@ -393,7 +466,7 @@ class StaticGenerator:
                 list_content = ["<ul>\n"]
                 for item in next_species:
                     item_low = prepare_filename(item)
-                    a_href = f"""<a href="{item_low}.html">{item}</a>"""
+                    a_href = self._gen_link(self.out_page_dir, f"{item_low}.html", item)
                     list_content.append(f"        <li>{a_href}</li>\n")
                 list_content.append("        </ul>")
                 list_str = "".join(list_content)
@@ -408,7 +481,7 @@ class StaticGenerator:
             return potential_content
         return None
 
-    def _prepare_description(self, description) -> Tuple[str, List[DefItem]]:
+    def _prepare_description(self, page_id, description) -> Tuple[str, List[DefItem]]:
         description_defs_list: List[DefItem] = self.data_loader.get_all_defs()
         ret_descr = description
         ret_keywords: List[DefItem] = []
@@ -422,25 +495,34 @@ class StaticGenerator:
             def_keyword = def_item.defvalue
             def_len = len(def_keyword)
             end_pos = pos + def_len
-            ## add suffix to def
-            ret_descr = ret_descr[:end_pos] + "</a>" + ret_descr[end_pos:]
-            ## add prefix to def
-            ret_descr = ret_descr[:pos] + f"""<a href="#{def_keyword}" class="def_item">""" + ret_descr[pos:]
+
+            wrap_content = ret_descr[pos:end_pos]
+            wrap_content = self._gen_link(None, f"#{page_id}_{def_keyword}", wrap_content, "def_item")
+            ret_descr = ret_descr[:pos] + wrap_content + ret_descr[end_pos:]
+
+            # ## add suffix to def
+            # ret_descr = ret_descr[:end_pos] + "</a>" + ret_descr[end_pos:]
+            # ## add prefix to def
+            # ret_descr = ret_descr[:pos] + f"""<a href="#{def_keyword}" class="def_item">""" + ret_descr[pos:]
+
             ret_keywords.append(def_item)
 
         return ret_descr, ret_keywords
 
     def _generate_species_index_page(self):
         page_path = os.path.join(self.out_root_dir, "species.html")
+        self.page_id = self._create_page_id(page_path)
 
         page_title = self.data_loader.get_model_title()
 
-        css_content = self._prepare_css(self.out_root_dir)
-        images_content = self._prepare_images_content()  ## no keywords
-
         ## species list page
         content = ""
-        content += f"""\
+
+        if not self.singlepagemode:
+            css_content = self._prepare_css(self.out_root_dir)
+            images_content = self._prepare_images_content()  ## no keywords
+
+            content += f"""\
 <!DOCTYPE html>
 <html>
 {HTML_LICENSE}
@@ -451,7 +533,6 @@ class StaticGenerator:
     {css_content}
     {images_content}
 </head>
-
 <body>
 """
         content += f"""
@@ -475,13 +556,14 @@ class StaticGenerator:
         list_content = ["""\n<ul class="species_list">\n"""]
         for species in species_list:
             item_low = prepare_filename(species)
-            a_href = f"""<a href="page/{item_low}.html">{species}</a>"""
+            a_href = self._gen_link(self.out_root_dir, f"page/{item_low}.html", species)
             list_content.append(f"    <li>{a_href}</li>\n")
         list_content.append("</ul>\n")
         list_str = "".join(list_content)
         content += list_str
 
-        content += """
+        if not self.singlepagemode:
+            content += """
 </body>
 </html>
 """
@@ -490,31 +572,32 @@ class StaticGenerator:
     def _generate_species_page(self, species_id):
         species_id_low = prepare_filename(species_id)
         page_path = os.path.join(self.out_page_dir, f"{species_id_low}.html")
+        self.page_id = self._create_page_id(page_path)
 
         prev_list = self.data_loader.nav_dict.prev_items_list(species_id)
 
         ## characteristics list
+        model_texts = self._prepare_model_item_descr(species_id_low)
         char_keywords = set()
         characteristic_content = """<ul class="characteristic_list">\n"""
         for prev_item in prev_list:
             prev_id = prev_item[0]
             prev_desc_index = prev_item[1]
-            prev_data = self._model_texts[prev_id]
+            prev_data = model_texts[prev_id]
             prev_desc_item = prev_data[prev_desc_index]
             _prev_desc, desc, desc_keys = prev_desc_item
             char_keywords.update(desc_keys)
-            char_link = f"""<a href="{prev_id}.html">{prev_id}</a>"""
+            char_link = self._gen_link(self.out_page_dir, f"{prev_id}.html", prev_id)
             characteristic_content += f"""<li>{char_link}: {desc}</li>\n"""
         characteristic_content += "</ul>\n"
         keywords_list: List[DefItem] = list(char_keywords)
 
         ## keywords row
         if keywords_list:
-            keywords_list = self._get_related_keywords(keywords_list)
+            keywords_list = self._get_related_keywords(species_id, keywords_list)
             characteristic_content += """\n<div class="keywords_section">\n"""
-            characteristic_content += self._prepare_defs_table(keywords_list, self.out_page_dir)
+            characteristic_content += self._prepare_defs_table(species_id_low, keywords_list, self.out_page_dir)
             characteristic_content += """\n</div>\n"""
-        images_list = self._get_image_paths_from_defs(keywords_list)
 
         last_item = prev_list[-1]
         species_target = self.data_loader.get_target(*last_item)
@@ -522,12 +605,15 @@ class StaticGenerator:
 
         page_title = self.data_loader.get_model_title()
 
-        css_content = self._prepare_css(self.out_page_dir)
-        images_content = self._prepare_images_content(images_list)
-
         ## species page
         content = ""
-        content += f"""\
+
+        if not self.singlepagemode:
+            css_content = self._prepare_css(self.out_page_dir)
+            images_list = self._get_image_paths_from_defs(keywords_list)
+            images_content = self._prepare_images_content(images_list)
+
+            content += f"""\
 <!DOCTYPE html>
 <html>
 {HTML_LICENSE}
@@ -538,7 +624,6 @@ class StaticGenerator:
     {css_content}
     {images_content}
 </head>
-
 <body>
 """
         content += f"""
@@ -557,16 +642,24 @@ class StaticGenerator:
         info_url = species_target[1]
         if info_url:
             content += f"""<div>Info: <a href="{info_url}">{info_url}</a></div>\n"""
+            # a_link = self._gen_link(self.out_page_dir, info_url, info_url)
+            # content += f"""<div>Info: {a_link}</div>\n"""
 
         content += characteristic_content
-        content += """
+
+        if not self.singlepagemode:
+            content += """
 </body>
 </html>
 """
         self._store_content(page_path, content)
 
     def _prepare_tree_graph(self, active_item_id):
-        data_graph = generate_graph(self.data_loader, active_item_id)
+        add_href = True
+        if self.singlepagemode:
+            # TODO: fix (it requires use of Java script to change CSS dynamically)
+            add_href = False
+        data_graph = generate_graph(self.data_loader, active_item_id, add_href=add_href)
         svg_content = get_graph_svg(data_graph)
 
         ## remove defined 'width' and 'height' - attributes corrupts image placement
@@ -574,6 +667,13 @@ class StaticGenerator:
         svg_content = svg_content.replace("\n", "\n    ")
         svg_content = svg_content.strip()
         svg_content = "    " + svg_content
+
+        if self.singlepagemode:
+            ## make unique items
+            svg_content = svg_content.replace('<g id="', f'<g id="{active_item_id}_')
+            ## remove links
+            # svg_content = re.sub(r'<a xlink:href="[\S ]+" xlink:title="[\S ]+">', "xxx", svg_content)
+            # svg_content = re.sub(r'</a>', "", svg_content)
 
         return f"""
 <div class="graph_section">
@@ -583,24 +683,20 @@ class StaticGenerator:
 
     def _generate_dictionary_page(self):
         page_path = os.path.join(self.out_root_dir, "dictionary.html")
+        self.page_id = self._create_page_id(page_path)
 
-        keywords_list = []
-        for prepare_desc_list in self._model_texts.values():
-            for prep_data in prepare_desc_list:
-                if not prep_data:
-                    continue
-                _desc_raw, _desc, desc_keys = prep_data
-                keywords_list.extend(desc_keys)
-        keywords_list = self._get_related_keywords(keywords_list)
-        images_list = self._get_image_paths_from_defs(keywords_list)
-
+        keywords_list = self._get_all_keywords("dict_html")
         page_title = self.data_loader.get_model_title()
-        css_content = self._prepare_css(self.out_root_dir)
-        images_content = self._prepare_images_content(images_list)
 
         ## dictionary page
         content = ""
-        content += f"""\
+
+        if not self.singlepagemode:
+            css_content = self._prepare_css(self.out_root_dir)
+            images_list = self._get_image_paths_from_defs(keywords_list)
+            images_content = self._prepare_images_content(images_list)
+
+            content += f"""\
 <!DOCTYPE html>
 <html>
 {HTML_LICENSE}
@@ -611,7 +707,6 @@ class StaticGenerator:
     {css_content}
     {images_content}
 </head>
-
 <body>
 """
         content += f"""
@@ -641,13 +736,14 @@ class StaticGenerator:
                     if dest_img_path:
                         copy_image(photo_path, dest_img_path, resize=False)
 
-        keywords_content = self._prepare_defs_table(keywords_list, self.out_root_dir)
+        keywords_content = self._prepare_defs_table("dict_html", keywords_list, self.out_root_dir)
         if keywords_content:
             content += """\n<div class="keywords_section">\n"""
             content += keywords_content
             content += """\n</div>\n"""
 
-        content += """
+        if not self.singlepagemode:
+            content += """
 </body>
 </html>
 """
@@ -660,6 +756,7 @@ class StaticGenerator:
             return ""
 
         source_image_path_list = list(set(source_image_path_list))
+        source_image_path_list.sort()
 
         img_class_list = []
         for photo_path in source_image_path_list:
@@ -704,8 +801,20 @@ class StaticGenerator:
 """
         return page_script_content
 
-    def _get_related_keywords(self, def_key_list: List[DefItem]) -> List[DefItem]:
-        def_key_list = self._append_keywords_in_defs(def_key_list)
+    def _get_all_keywords(self, page_id):
+        model_texts = self._prepare_model_item_descr()
+        keywords_list = []
+        for prepare_desc_list in model_texts.values():
+            for prep_data in prepare_desc_list:
+                if not prep_data:
+                    continue
+                _desc_raw, _desc, desc_keys = prep_data
+                keywords_list.extend(desc_keys)
+        keywords_list = self._get_related_keywords(page_id, keywords_list)
+        return keywords_list
+
+    def _get_related_keywords(self, page_id, def_key_list: List[DefItem]) -> List[DefItem]:
+        def_key_list = self._append_keywords_in_defs(page_id, def_key_list)
         ## remove duplicates
         def_key_list = list({item.defvalue: item for item in def_key_list}.values())
         def_key_list.sort(key=lambda x: x.get_label().lower())
@@ -714,32 +823,36 @@ class StaticGenerator:
     def _prepare_back_to(self, subpage_dir, item_id=None):
         main_page_rel_path = os.path.relpath(self.out_index_path, subpage_dir)
         prev_content = """<div class="main_section">Back to: """
-        link_list = [f"""<a href="{main_page_rel_path}">{self.label_back_to_main}</a>"""]
+        back_link = self._gen_link(subpage_dir, main_page_rel_path, self.label_back_to_main)
+        link_list = [back_link]
 
         if item_id:
             nav_dict = self.data_loader.nav_dict
             prev_items = nav_dict.prev_id_list(item_id)
             if prev_items:
                 for prev in prev_items:
-                    item = f"""<a href="{prev}.html">{prev}</a>"""
+                    item = self._gen_link(subpage_dir, f"{prev}.html", prev)
                     link_list.append(item)
 
         prev_content += " | ".join(link_list)
         prev_content += "</div>"
         return prev_content
 
-    def _prepare_defs_table(self, keywords_list: List[DefItem], page_dir):  # pylint: disable=R0914
+    def _prepare_defs_table(self, page_id, keywords_list: List[DefItem], page_dir):  # pylint: disable=R0914
         if not keywords_list:
             return None
 
         ## prepare "mentioned" list
+        model_texts = self._prepare_model_item_descr()
         model_item_keys = {}
-        for item_id, prep_desc_list in self._model_texts.items():
+        for item_id, prep_desc_list in model_texts.items():
             item_keys = []
             for prep_item in prep_desc_list:
                 _desc_text, _desc, desc_keys = prep_item
                 item_keys.extend([item.defvalue for item in desc_keys])
             model_item_keys[item_id] = item_keys
+
+        def_texts = self._prepare_dictionary_item_descr(page_id)
 
         defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
         keywords_content = ""
@@ -748,12 +861,13 @@ class StaticGenerator:
         for keyword_def in keywords_list:
             keyword = keyword_def.defvalue
             keyword_label = keyword_def.get_label()
+            def_name_id = prepare_page_id(f"{page_id}_{keyword}")
             single_keyword_content = f"""<tr class="def_row">
-    <td class="def_item"><a name="{keyword}"></a>{keyword_label}</td>\n"""
+    <td class="def_item"><a name="{def_name_id}"></a>{keyword_label}</td>\n"""
             single_keyword_content += """    <td> """
 
             keyword_data_list = defs_dict[keyword]
-            keyword_text_list = self._def_texts[keyword]
+            keyword_text_list = def_texts[keyword]
             keyword_defs_content = ""
             for keyword_index, keyword_item in enumerate(keyword_data_list):
                 photo_path = keyword_item.get("image")
@@ -779,7 +893,7 @@ class StaticGenerator:
                     if keyword in item_desc_keys:
                         item_path = os.path.join(self.out_page_dir, f"{item_id}.html")
                         item_rel_path = os.path.relpath(item_path, page_dir)
-                        item_link = f"""<a href="{item_rel_path}">{item_id}</a>"""
+                        item_link = self._gen_link(page_dir, item_rel_path, item_id)
                         mentioned_list.append(item_link)
                 if mentioned_list:
                     items_str = " ".join(mentioned_list)
@@ -796,14 +910,16 @@ class StaticGenerator:
 
         return keywords_content
 
-    def _append_keywords_in_defs(self, keywords_list: List[DefItem]):
+    def _append_keywords_in_defs(self, page_id, keywords_list: List[DefItem]):
+        def_texts = self._prepare_dictionary_item_descr(page_id)
+
         counter = 0
         found_keywords = {item.defvalue for item in keywords_list}
         while counter < len(keywords_list):
             keyword_def = keywords_list[counter]
             keyword = keyword_def.defvalue
             counter += 1
-            keyword_data_list = self._def_texts[keyword]
+            keyword_data_list = def_texts[keyword]
             for def_item in keyword_data_list:
                 if not def_item:
                     continue
@@ -815,12 +931,71 @@ class StaticGenerator:
         keywords_list = sorted(list(set(keywords_list)), key=lambda x: x.defvalue.lower())
         return keywords_list
 
+    def _gen_link(self, from_dir_path, target_subpath, label, a_class=None):
+        class_attr = ""
+        if a_class:
+            class_attr = f""" class="{a_class}" """
+
+        if target_subpath.startswith("#"):
+            # if not self.singlepagemode:
+            #     return f"""<a href="{target_subpath}"{class_attr}>{label}</a>"""
+            anchor = prepare_page_id(target_subpath)
+            return f"""<a href="{anchor}"{class_attr}>{label}</a>"""
+
+        target_path = os.path.join(from_dir_path, target_subpath)
+        target_path = os.path.realpath(target_path)
+
+        if not self.singlepagemode:
+            rel_target = os.path.relpath(target_path, from_dir_path)
+            return f"""<a href="{rel_target}"{class_attr}>{label}</a>"""
+
+        ## single page mode
+        target_path = os.path.join(from_dir_path, target_subpath)
+        page_id = self._create_page_id(target_path)
+        return f"""<label for="{page_id}"{class_attr} onclick="window.scrollTo(0, 0);">{label}</label>"""
+
+        ## does not work - link not activated
+        # return f"""<a href="#{page_id}_top_pos"{class_attr}><label for="{page_id}">{label}</label></a>"""
+
+        ## does not work - label is not activated
+        # return f"""<label for="{page_id}"><a href="#{page_id}_top_pos"{class_attr}>{label}</a></label>"""
+
+    def _create_page_id(self, page_path):
+        target_subpath = os.path.realpath(page_path)
+        rel_target = os.path.relpath(target_subpath, self.out_root_dir)
+        page_id = prepare_page_id(rel_target)
+        page_id = f"""pageno-{page_id}"""
+        return page_id
+
     def _store_content(self, page_path, content):
         self.page_counter += 1
         progress = self.page_counter / self.total_count * 100
         # progress = int(self.page_counter / self.total_count * 10000) / 100
         _LOGGER.debug("%.2f%% storing page: %s", progress, page_path)
-        write_data(page_path, content)
+
+        if not self.singlepagemode:
+            write_data(page_path, content)
+            return
+
+        ## single page mode
+        checked_attr = ""
+        page_rel_path = os.path.relpath(page_path, self.out_root_dir)
+        if page_rel_path == "index.html":
+            checked_attr = """ checked="checked" """
+        page_id = prepare_page_id(page_rel_path)
+        page_id = f"""pageno-{page_id}"""
+
+        content = content.replace("\n", "\n    ")
+        content = content.strip()
+        content = "    " + content
+
+        self._content += f"""
+<div class="page-container"><input class="page-selector" type="radio" name="page-input" id="{page_id}"{checked_attr}>
+<div class="page-content">
+{content}
+</div>
+</div>
+"""
 
 
 ## ===========================================================================================
@@ -899,12 +1074,18 @@ def find_all(content, substring, match_subword=False) -> List[int]:
 
 
 def prepare_image_id(img_path: str):
-    image_id = img_path
-    image_id = image_id.replace(".", "_")
-    image_id = image_id.replace("-", "_")
-    image_id = image_id.replace("/", "_")
-    image_id = image_id.replace("\\", "_")
+    image_id = prepare_page_id(img_path)
     return f"image_{image_id}"
+
+
+def prepare_page_id(page_path: str):
+    page_id = page_path
+    page_id = page_id.replace(" ", "_")
+    page_id = page_id.replace(".", "_")
+    page_id = page_id.replace("-", "_")
+    page_id = page_id.replace("/", "_")
+    page_id = page_id.replace("\\", "_")
+    return page_id
 
 
 def prepare_filename(name: str):
@@ -919,7 +1100,7 @@ def prepare_filename(name: str):
 ## ================================================================
 
 
-def generate_graph(data_loader: DataLoader, active_item: str) -> Graph:
+def generate_graph(data_loader: DataLoader, active_item: str, add_href=True) -> Graph:
     graph: Graph = Graph()
     base_graph = graph.base_graph
     base_graph.set_name("model_graph")
@@ -957,7 +1138,8 @@ def generate_graph(data_loader: DataLoader, active_item: str) -> Graph:
                         set_node_style(active_node, style)
                     created_node = graph.getNode(node)
                     node_filename = prepare_filename(node)
-                    created_node.set("href", f"{node_filename}.html")
+                    if add_href:
+                        created_node.set("href", f"{node_filename}.html")
 
                 new_edge = graph.addEdge(*new_edge)
                 new_edge.set("color", "black")  # type: ignore
