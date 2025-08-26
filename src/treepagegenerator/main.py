@@ -40,12 +40,14 @@ def process_generate(args):
     embedcss = args.embedcss
     embedimages = args.embedimages
     singlepagemode = args.singlepagemode
+    output_index_name = args.outindexname
     output_path = args.outdir
 
     generate_pages(
         config_path,
         translation_path,
         output_path,
+        output_index_name,
         embedcss=embedcss,
         embedimages=embedimages,
         singlepagemode=singlepagemode,
@@ -93,6 +95,7 @@ def main():
     subparser.add_argument(
         "--singlepagemode", action="store_true", default=False, help="Embed everything into single page"
     )
+    subparser.add_argument("--outindexname", action="store", default="index.html", help="Name of main index page")
     subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
 
     ## =================================================

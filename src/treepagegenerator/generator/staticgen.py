@@ -32,10 +32,25 @@ _LOGGER = logging.getLogger(__name__)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
-def generate_pages(config_path, translation_path, output_path, embedcss=False, embedimages=False, singlepagemode=False):
+def generate_pages(
+    config_path,
+    translation_path,
+    output_path,
+    output_index_name=None,
+    embedcss=False,
+    embedimages=False,
+    singlepagemode=False,
+):
     gen = StaticGenerator()
     data_loader = DataLoader(config_path, translation_path)
-    gen.generate(data_loader, output_path, embedcss=embedcss, embedimages=embedimages, singlepagemode=singlepagemode)
+    gen.generate(
+        data_loader,
+        output_path,
+        output_index_name=output_index_name,
+        embedcss=embedcss,
+        embedimages=embedimages,
+        singlepagemode=singlepagemode,
+    )
 
     # check_defs_repetitions(data_loader)
 
@@ -436,8 +451,7 @@ class BaseGenerator:
 
         ## single page mode
         checked_attr = ""
-        page_rel_path = os.path.relpath(page_path, self.out_root_dir)
-        if page_rel_path == "index.html":
+        if page_path == self.out_index_path:
             checked_attr = """ checked="checked" """
         page_id = self.create_page_id(page_path)
 
@@ -462,8 +476,10 @@ class PageIndexGenerator:
     def __init__(self, static_generator: BaseGenerator):  # noqa: F811
         self.static_gen: BaseGenerator = static_generator
 
-    def generate(self):
-        self.static_gen.out_index_path = os.path.join(self.static_gen.out_root_dir, "index.html")
+    def generate(self, output_index_name=None):
+        if output_index_name is None:
+            output_index_name = "index.html"
+        self.static_gen.out_index_path = os.path.join(self.static_gen.out_root_dir, output_index_name)
         self.static_gen.page_id = self.static_gen.create_page_id(self.static_gen.out_index_path)
 
         model = self.static_gen.data_loader.model_data
@@ -975,7 +991,15 @@ class StaticGenerator:
     def __init__(self):  # noqa: F811
         self.base_gen: BaseGenerator = None
 
-    def generate(self, data_loader: DataLoader, output_path, embedcss=False, embedimages=False, singlepagemode=False):
+    def generate(
+        self,
+        data_loader: DataLoader,
+        output_path,
+        output_index_name=None,
+        embedcss=False,
+        embedimages=False,
+        singlepagemode=False,
+    ):
         self.base_gen = BaseGenerator()
         self.base_gen.embedcss = embedcss
         self.base_gen.embedimages = embedimages
@@ -989,7 +1013,7 @@ class StaticGenerator:
 
         ## prepare index page
         index_page_gen = PageIndexGenerator(self.base_gen)
-        index_page_gen.generate()
+        index_page_gen.generate(output_index_name)
 
         ## prepare model pages
         model_page_gen = PageModelGenerator(self.base_gen)

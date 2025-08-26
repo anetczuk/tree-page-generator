@@ -38,14 +38,17 @@ if [[ $* == *--info* ]]; then
     exit 0
 fi
 
+INDEX_NAME="key_ant_worker_formica_czechowski.html"
+
 set -x
 python3 -m treepagegenerator.main -la generate \
                                   --config "$CONFIG_PATH" \
                                   --embedcss --embedimages --singlepagemode \
+                                  --outindexname "key_ant_worker_formica_czechowski.html" \
                                   --outdir "$OUT_DIR"
 { set +x; } 2> /dev/null
 
-INDEX_PATH="${OUT_DIR}/index.html"
+INDEX_PATH="${OUT_DIR}/${INDEX_NAME}"
 
 echo -e "\n\nchecking links"
 
