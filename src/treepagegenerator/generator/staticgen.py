@@ -494,6 +494,7 @@ class PageIndexGenerator:
             css_content = self.static_gen.prepare_css(self.static_gen.out_root_dir)
             images_content = self.static_gen.prepare_images_css()  ## no keywords
 
+            ## index template
             content += f"""\
 <!DOCTYPE html>
 <html>
@@ -502,10 +503,12 @@ class PageIndexGenerator:
 <head>
     <title>{page_title}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <!-- for mobile web browser to fix font sizes -->
     {css_content}
     {images_content}
 </head>
 <body>
+<div class="page-container">
 """
 
         model_desc = self.static_gen.data_loader.get_model_description()
@@ -535,6 +538,7 @@ class PageIndexGenerator:
 """
         if not self.static_gen.singlepagemode:
             content += """
+</div>
 </body>
 </html>
 """
@@ -582,6 +586,7 @@ class PageModelGenerator:
             images_list = self.static_gen.get_image_paths_from_defs(keywords_list)
             images_content = self.static_gen.prepare_images_css(images_list)
 
+            ## model item template
             content += f"""\
 <!DOCTYPE html>
 <html>
@@ -590,10 +595,12 @@ class PageModelGenerator:
 <head>
     <title>{page_title} - characteristics</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <!-- for mobile web browser to fix font sizes -->
     {css_content}
     {images_content}
 </head>
 <body>
+<div class="page-container">
 """
         content += f"""
 <div class="main_section title">{page_title}</div>
@@ -607,6 +614,7 @@ class PageModelGenerator:
 
         if not self.static_gen.singlepagemode:
             content += """
+</div>
 </body>
 </html>
 """
@@ -768,6 +776,7 @@ class PageModelGenerator:
             images_list = self.static_gen.get_image_paths_from_defs(keywords_list)
             images_content = self.static_gen.prepare_images_css(images_list)
 
+            ## model leaf template
             content += f"""\
 <!DOCTYPE html>
 <html>
@@ -776,10 +785,12 @@ class PageModelGenerator:
 <head>
     <title>{page_title} - {species_name}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <!-- for mobile web browser to fix font sizes -->
     {css_content}
     {images_content}
 </head>
 <body>
+<div class="page-container">
 """
         content += f"""
 <div class="main_section title">{page_title}</div>
@@ -804,6 +815,7 @@ class PageModelGenerator:
 
         if not self.static_gen.singlepagemode:
             content += """
+</div>
 </body>
 </html>
 """
@@ -858,6 +870,7 @@ class PageSpeciesIndexGenerator:
             css_content = self.static_gen.prepare_css(self.static_gen.out_root_dir)
             images_content = self.static_gen.prepare_images_css()  ## no keywords
 
+            ## species index template
             content += f"""\
 <!DOCTYPE html>
 <html>
@@ -866,10 +879,12 @@ class PageSpeciesIndexGenerator:
 <head>
     <title>{page_title} - species</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <!-- for mobile web browser to fix font sizes -->
     {css_content}
     {images_content}
 </head>
 <body>
+<div class="page-container">
 """
         content += f"""
 <div class="main_section title">{page_title}</div>
@@ -900,6 +915,7 @@ class PageSpeciesIndexGenerator:
 
         if not self.static_gen.singlepagemode:
             content += """
+</div>
 </body>
 </html>
 """
@@ -929,6 +945,7 @@ class PageDictionaryGenerator:
             images_list = self.static_gen.get_image_paths_from_defs(keywords_list)
             images_content = self.static_gen.prepare_images_css(images_list)
 
+            ## dictionary template
             content += f"""\
 <!DOCTYPE html>
 <html>
@@ -937,10 +954,12 @@ class PageDictionaryGenerator:
 <head>
     <title>{page_title} - dictionary</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <!-- for mobile web browser to fix font sizes -->
     {css_content}
     {images_content}
 </head>
 <body>
+<div class="page-container">
 """
         content += f"""
 <div class="main_section title">{page_title}</div>
@@ -977,6 +996,7 @@ class PageDictionaryGenerator:
 
         if not self.static_gen.singlepagemode:
             content += """
+</div>
 </body>
 </html>
 """
@@ -1041,6 +1061,7 @@ class StaticGenerator:
 
         content = self.base_gen.get_content()
 
+        ## single page template
         content = f"""\
 <!DOCTYPE html>
 <html>
@@ -1049,6 +1070,7 @@ class StaticGenerator:
 <head>
     <title>{page_title}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <!-- for mobile web browser to fix font sizes -->
     <style>
 label {{
     cursor: pointer;

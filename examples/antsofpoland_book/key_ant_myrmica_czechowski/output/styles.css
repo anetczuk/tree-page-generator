@@ -1,8 +1,6 @@
 /* general styles */
 body {
     background-color: #ebedef;
-    width: 1024px;
-    margin: 0 auto;
 }
 
 table {
@@ -21,6 +19,12 @@ table td, table th {
 /* make link stretch to whole cell */
 td {
     overflow: hidden;
+}
+
+.page-container {
+    margin: 0 auto;
+    padding: 0 32px;
+    width: 1024px;
 }
 
 .next_char {
