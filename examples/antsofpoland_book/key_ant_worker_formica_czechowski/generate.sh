@@ -43,7 +43,7 @@ INDEX_NAME="key_ant_worker_formica_czechowski.html"
 set -x
 python3 -m treepagegenerator.main -la generate \
                                   --config "$CONFIG_PATH" \
-                                  --embedcss --embedimages --singlepagemode \
+                                  --embedcss --embedimages --singlepagemode --allowjs \
                                   --outindexname "key_ant_worker_formica_czechowski.html" \
                                   --outdir "$OUT_DIR"
 { set +x; } 2> /dev/null

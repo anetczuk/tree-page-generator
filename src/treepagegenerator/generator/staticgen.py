@@ -34,15 +34,15 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 def generate_pages(
     config_path,
-    translation_path,
     output_path,
     output_index_name=None,
     embedcss=False,
     embedimages=False,
     singlepagemode=False,
+    allowjs=False,
 ):
     gen = StaticGenerator()
-    data_loader = DataLoader(config_path, translation_path)
+    data_loader = DataLoader(config_path)
     gen.generate(
         data_loader,
         output_path,
@@ -50,6 +50,7 @@ def generate_pages(
         embedcss=embedcss,
         embedimages=embedimages,
         singlepagemode=singlepagemode,
+        allowjs=allowjs,
     )
 
     # check_defs_repetitions(data_loader)
@@ -87,6 +88,7 @@ class BaseGenerator:
         self.embedcss = False
         self.embedimages = False
         self.singlepagemode = False
+        self.allowjs = False  ## mostly for single page mode
 
         self.data_loader: DataLoader = None
 
@@ -437,7 +439,12 @@ class BaseGenerator:
         ## single page mode
         target_path = os.path.join(from_dir_path, target_subpath)
         page_id = self.create_page_id(target_path)
-        return f"""<label for="{page_id}"{class_attr} onclick="window.scrollTo(0, 0);">{label}</label>"""
+
+        if self.allowjs:
+            return f"""<a href="#"{class_attr}onclick="change_page_to('{page_id}');">{label}</a>"""
+
+        ## here there is JavaScript as well, but it is harmless and disabling it does not affect functionality of page
+        return f"""<label for="input-{page_id}"{class_attr} onclick="window.scrollTo(0, 0);">{label}</label>"""
 
         ## does not work - link not activated
         # return f"""<a href="#{page_id}_top_pos"{class_attr}><label for="{page_id}">{label}</label></a>"""
@@ -455,22 +462,48 @@ class BaseGenerator:
         css_content = self.prepare_css(out_dir)
         images_content = self.prepare_images_css(embed_images_list)
 
+        body_onload = ""
+
         if self.singlepagemode:
             ## additional styles
-            css_content = f"""\
-<style>
-label {{
+            if not self.allowjs:
+                css_content += """\
+    <style>
+label {
     cursor: pointer;
     color: blue;
-}}
-.page-selector, .page-content {{
+}
+.page-selector, .page-selector-content {
     display: none;
-}}
-.page-selector:checked ~ .page-content {{
+}
+.page-selector:checked ~ .page-selector-content {
     display: block;
-}}
+}
+    </style>"""
+            else:
+                css_content += """\
+    <style>
+.page-container {
+    display: none;
+}
     </style>
-    {css_content}"""
+    <script type="text/javascript">
+/* jshint esversion: 6 */
+
+function change_page_to(page_id) {
+    /// hide pages
+    let elements = document.getElementsByClassName('page-container');
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].style.display = "none";
+    }
+
+    /// show desired page
+    let target = document.getElementById(page_id);
+    target.style.display = "block";
+}
+    </script>"""
+                page_id = self.create_page_id(self.out_index_path)
+                body_onload = f""" onload="change_page_to('{page_id}');" """
 
         if not self.singlepagemode:
             content = f"""\
@@ -490,7 +523,7 @@ label {{
     {css_content}
     {images_content}
 </head>
-<body>
+<body{body_onload}>
 {content}
 </body>
 </html>
@@ -512,15 +545,22 @@ label {{
         checked_attr = ""
         if page_path == self.out_index_path:
             checked_attr = """ checked="checked" """
-        page_id = self.create_page_id(page_path)
 
         content = content.replace("\n", "\n    ")
         content = content.strip()
         content = "    " + content
 
-        self._content += f"""
-<div class="page-container"><input class="page-selector" type="radio" name="page-input" id="{page_id}"{checked_attr}>
-<div class="page-content">
+        if self.allowjs:
+            self._content += f"""
+<div id="{self.page_id}" class="page-container">
+{content}
+</div>
+"""
+        else:
+            self._content += f"""
+<div id="{self.page_id}" class="page-container">\
+<input class="page-selector" type="radio" name="page-input" id="input-{self.page_id}"{checked_attr}>
+<div class="page-selector-content">
 {content}
 </div>
 </div>
@@ -802,8 +842,7 @@ class PageModelGenerator:
 
     def _prepare_tree_graph(self, active_item_id):
         add_href = True
-        if self.base_gen.singlepagemode:
-            # TODO: fix (it requires use of Java script to change CSS dynamically)
+        if self.base_gen.singlepagemode and not self.base_gen.allowjs:
             add_href = False
         data_graph = generate_graph(self.base_gen.data_loader, active_item_id, add_href=add_href)
         svg_content = get_graph_svg(data_graph)
@@ -817,9 +856,21 @@ class PageModelGenerator:
         if self.base_gen.singlepagemode:
             ## make unique items
             svg_content = svg_content.replace('<g id="', f'<g id="{active_item_id}_')
-            ## remove links
-            # svg_content = re.sub(r'<a xlink:href="[\S ]+" xlink:title="[\S ]+">', "xxx", svg_content)
-            # svg_content = re.sub(r'</a>', "", svg_content)
+
+            if self.base_gen.allowjs:
+                ## change links
+                found = re.findall(r'<a xlink:href="([\S ]+)" xlink:title="[\S ]+">', svg_content)
+                for target in found:
+                    target_path = os.path.join(self.base_gen.out_page_dir, target)
+                    target_id = self.base_gen.create_page_id(target_path)
+                    svg_content = re.sub(
+                        rf'xlink:href="{target}"',
+                        f'xlink:href="#" onclick="change_page_to(\'{target_id}\');"',
+                        svg_content,
+                    )
+            #     ## remove links
+            #     svg_content = re.sub(r'<a xlink:href="[\S ]+" xlink:title="[\S ]+">', "", svg_content)
+            #     svg_content = re.sub(r"</a>", "", svg_content)
 
         return f"""
 <div class="graph_section">
@@ -950,11 +1001,13 @@ class StaticGenerator:
         embedcss=False,
         embedimages=False,
         singlepagemode=False,
+        allowjs=False,
     ):
         self.base_gen = BaseGenerator()
         self.base_gen.embedcss = embedcss
         self.base_gen.embedimages = embedimages
         self.base_gen.singlepagemode = singlepagemode
+        self.base_gen.allowjs = allowjs
 
         self.base_gen.set_root_dir(output_dir_path)
 

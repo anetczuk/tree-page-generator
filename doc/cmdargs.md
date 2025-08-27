@@ -23,9 +23,9 @@ subcommands:
 ## <a name="generate_help"></a> python3 -m treepagegenerator.main generate --help
 ```
 usage: python3 -m treepagegenerator.main generate [-h] [-c CONFIG]
-                                                  [-t TRANSLATION]
                                                   [--embedcss] [--embedimages]
                                                   [--singlepagemode]
+                                                  [--allowjs]
                                                   [--outindexname OUTINDEXNAME]
                                                   --outdir OUTDIR
 
@@ -35,11 +35,11 @@ options:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
                         Path to config file (default: None)
-  -t TRANSLATION, --translation TRANSLATION
-                        Path to translation file (default: None)
   --embedcss            Embed CSS styles (default: False)
   --embedimages         Embed images (default: False)
   --singlepagemode      Embed everything into single page (default: False)
+  --allowjs             Allow JavaScript (for single page mode) (default:
+                        False)
   --outindexname OUTINDEXNAME
                         Name of main index page (default: index.html)
   --outdir OUTDIR       Path to output directory (default: None)

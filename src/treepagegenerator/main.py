@@ -36,21 +36,21 @@ def process_generate(args):
     _LOGGER.info("starting generator")
     _LOGGER.debug("logging to file: %s", logger.log_file)
     config_path = args.config
-    translation_path = args.translation
     embedcss = args.embedcss
     embedimages = args.embedimages
     singlepagemode = args.singlepagemode
+    allowjs = args.allowjs
     output_index_name = args.outindexname
     output_path = args.outdir
 
     generate_pages(
         config_path,
-        translation_path,
         output_path,
         output_index_name,
         embedcss=embedcss,
         embedimages=embedimages,
         singlepagemode=singlepagemode,
+        allowjs=allowjs,
     )
     return 0
 
@@ -89,11 +89,13 @@ def main():
     subparser.description = description
     subparser.set_defaults(func=process_generate)
     subparser.add_argument("-c", "--config", action="store", required=False, help="Path to config file")
-    subparser.add_argument("-t", "--translation", action="store", required=False, help="Path to translation file")
     subparser.add_argument("--embedcss", action="store_true", default=False, help="Embed CSS styles")
     subparser.add_argument("--embedimages", action="store_true", default=False, help="Embed images")
     subparser.add_argument(
         "--singlepagemode", action="store_true", default=False, help="Embed everything into single page"
+    )
+    subparser.add_argument(
+        "--allowjs", action="store_true", default=False, help="Allow JavaScript (for single page mode)"
     )
     subparser.add_argument("--outindexname", action="store", default="index.html", help="Name of main index page")
     subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
