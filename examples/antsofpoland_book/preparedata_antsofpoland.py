@@ -7,12 +7,11 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import os
-from typing import Dict, Any, List
 import argparse
-
 import json
+import os
 import re
+from typing import Any
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -56,44 +55,46 @@ def find_nth(haystack: str, needle: str, n: int, start: int = 0) -> int:
     return start
 
 
+# ruff: noqa: C901, PLR0912, PLR0915
 def convert_key(raw_key_content):
     first_key = None
-    characteristic_list: Dict[str, Any] = {}
+    characteristic_list: dict[str, Any] = {}
     curr_key = None
-    choices_list: List[Any] = []  ## choices for single characteristic
-    choice_lines: List[str] = []  ## text lines for single choice
+    choices_list: list[Any] = []  ## choices for single characteristic
+    choice_lines: list[str] = []  ## text lines for single choice
     for line in raw_key_content:
-        line = line.strip()
-        if not line:
+        cut_line = line
+        cut_line = cut_line.strip()
+        if not cut_line:
             ## empty line
             continue
 
         if not choice_lines:
-            found_nums = re.findall(r"^(\d+)\. ", line)
+            found_nums = re.findall(r"^(\d+)\. ", cut_line)
             if found_nums:
                 ## new characteristic
                 if choices_list:
                     characteristic_list[curr_key] = choices_list
                 choices_list = []
                 curr_key = found_nums[0]
-                line = line[len(curr_key) + 2 :]
+                cut_line = cut_line[len(curr_key) + 2 :]
                 if first_key is None:
                     first_key = curr_key
             if choices_list:
-                found_prefixes = re.findall(r"^-\s+", line)
+                found_prefixes = re.findall(r"^-\s+", cut_line)
                 if found_prefixes:
                     prefix_str = found_prefixes[0]
-                    line = line[len(prefix_str) :]
+                    cut_line = cut_line[len(prefix_str) :]
 
-        found_postfix = re.findall(r"\s+\.[\.]+$", line)
+        found_postfix = re.findall(r"\s+\.[\.]+$", cut_line)
         if found_postfix:
             postfix = found_postfix[0]
-            end_pos = len(line) - len(postfix)
-            line = line[:end_pos]
+            end_pos = len(cut_line) - len(postfix)
+            cut_line = cut_line[:end_pos]
 
-        choice_lines.append(line)
+        choice_lines.append(cut_line)
 
-        if "... " in line:
+        if "... " in cut_line:
             ## end of choice
             curr_choice = " ".join(choice_lines)
             curr_choice = curr_choice.strip()
@@ -144,8 +145,7 @@ def convert_key(raw_key_content):
             choice_lines = []
     characteristic_list[curr_key] = choices_list
 
-    model_dict = {"start": first_key, "data": characteristic_list}
-    return model_dict
+    return {"start": first_key, "data": characteristic_list}
 
 
 def main():
@@ -161,7 +161,7 @@ def main():
     args = parser.parse_args()
 
     data_path = args.rawkey
-    with open(data_path, "r", encoding="utf-8") as file:
+    with open(data_path, encoding="utf-8") as file:
         txt_content = file.readlines()
 
     model_dict = convert_key(txt_content)

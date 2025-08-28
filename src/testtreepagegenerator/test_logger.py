@@ -6,10 +6,9 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import unittest
-
-import logging
 import io
+import logging
+import unittest
 
 from treepagegenerator import logger
 
@@ -17,7 +16,7 @@ from treepagegenerator import logger
 class LoggerTest(unittest.TestCase):
     def setUp(self):
         ## Called before testfunction is executed
-        self.logger = logging.Logger(__name__)
+        self.logger = logging.getLogger(__name__)
         self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG)
         self.buffer = io.StringIO()
@@ -27,10 +26,8 @@ class LoggerTest(unittest.TestCase):
         self.logger.addHandler(handler)
 
     def tearDown(self):
-        ## Called after testfunction was executed
-        self.logger = None
-        self.buffer.close()
-        self.buffer = None
+        # ## Called after testfunction was executed
+        pass
 
     def test_empty_message(self):
         self.logger.info("")

@@ -6,8 +6,8 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import sys
 import os
+import sys
 
 
 #### append source root - it is needed to directly run main.py

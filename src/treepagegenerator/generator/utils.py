@@ -6,8 +6,8 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import os
 import logging
+import os
 
 from treepagegenerator.generator.dataloader import get_translation, is_url
 
@@ -24,7 +24,7 @@ Project is distributed under the BSD 3-Clause license.
 -->"""
 
 
-def dict_to_html_table(data_dict, translation_dict=None, header=True, table_class=None):
+def dict_to_html_table(data_dict, translation_dict=None, table_class=None, *, header=True):
     if data_dict is None:
         return None
     table_css = ""

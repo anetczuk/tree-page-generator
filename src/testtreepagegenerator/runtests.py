@@ -7,24 +7,25 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-try:
-    ## following import success only when file is directly executed from command line
-    ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
-    import __init__
-except ImportError:
-    ## when import fails then it means that the script was executed indirectly
-    ## in this case __init__ is already loaded
-    pass
+# ruff: noqa: T201
+
+# try:
+#     ## following import success only when file is directly executed from command line
+#     ## otherwise will throw exception when executing as parameter for "python -m"
+#     # pylint: disable=W0611
+#     import __init__
+# except ImportError:
+#     ## when import fails then it means that the script was executed indirectly
+#     ## in this case __init__ is already loaded
+#     pass
 
 
-import sys
-import os
-
-import logging
-import unittest
-import re
 import argparse
+import logging
+import os
+import re
+import sys
+import unittest
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -43,44 +44,45 @@ def match_tests(pattern: str):
         return loader.loadTestsFromName(pattern)
 
     ## wildcarded
-    rePattern = pattern
+    re_pattern = pattern
     # pylint: disable=W1401
-    rePattern = rePattern.replace("/", ".")
-    rePattern = rePattern.replace(".", r"\.")
-    rePattern = rePattern.replace("*", ".*")
-    ## rePattern = "^" + rePattern + "$"
-    _LOGGER.info("searching test cases with pattern: %s", rePattern)
+    re_pattern = re_pattern.replace("/", ".")
+    re_pattern = re_pattern.replace(".", r"\.")
+    re_pattern = re_pattern.replace("*", ".*")
+    ## re_pattern = "^" + re_pattern + "$"
+    _LOGGER.info("searching test cases with pattern: %s", re_pattern)
     loader = unittest.TestLoader()
-    testsSuite = loader.discover(SCRIPT_DIR)
-    return match_test_suites(testsSuite, rePattern)
+    tests_suite = loader.discover(SCRIPT_DIR)
+    return match_test_suites(tests_suite, re_pattern)
 
 
-def match_test_suites(testsList, rePattern: str):
-    retSuite = unittest.TestSuite()
-    for testObject in testsList:
-        if isinstance(testObject, unittest.TestSuite):
-            subTests = match_test_suites(testObject, rePattern)
-            retSuite.addTest(subTests)
+def match_test_suites(tests_list, re_pattern: str):
+    ret_suite = unittest.TestSuite()
+    for test_object in tests_list:
+        if isinstance(test_object, unittest.TestSuite):
+            sub_tests = match_test_suites(test_object, re_pattern)
+            ret_suite.addTest(sub_tests)
             continue
-        if isinstance(testObject, unittest.TestCase):
-            classobj = testObject.__class__
+        if isinstance(test_object, unittest.TestCase):
+            classobj = test_object.__class__
             # pylint: disable=W0212,
-            testCaseFullName = ".".join([classobj.__module__, classobj.__name__, testObject._testMethodName])
-            matched = re.search(rePattern, testCaseFullName)
+            # ruff: noqa: SLF001
+            test_case_full_name = f"{classobj.__module__}.{classobj.__name__}.{test_object._testMethodName}"
+            matched = re.search(re_pattern, test_case_full_name)
             if matched is not None:
-                ## _LOGGER.info("test case matched: %s", testCaseFullName )
-                retSuite.addTest(testObject)
+                ## _LOGGER.info("test case matched: %s", test_case_full_name )
+                ret_suite.addTest(test_object)
             continue
-        _LOGGER.warning("unknown type: %s", type(testObject))
-    return retSuite
+        _LOGGER.warning("unknown type: %s", type(test_object))
+    return ret_suite
 
 
 def get_test_cases(run_test):
     if run_test:
         ## not empty
         return match_tests(run_test)
-    testsLoader = unittest.TestLoader()
-    return testsLoader.discover(SCRIPT_DIR)
+    tests_loader = unittest.TestLoader()
+    return tests_loader.discover(SCRIPT_DIR)
 
 
 ## ============================= main section ===================================
@@ -99,7 +101,12 @@ if __name__ == "__main__":
         help="Module with tests, e.g. module.submodule.test_file.test_class.test_method, wildcard * allowed",
     )
     parser.add_argument(
-        "-r", "--repeat", action="store", type=int, default=0, help="Repeat tests given number of times"
+        "-r",
+        "--repeat",
+        action="store",
+        type=int,
+        default=0,
+        help="Repeat tests given number of times",
     )
     parser.add_argument("-ut", "--untilfailure", action="store_true", help="Run tests in loop until failure")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -116,7 +123,7 @@ if __name__ == "__main__":
     if args.verbose:
         verbosity = 2
 
-    testsRepeats = int(args.repeat)
+    tests_repeats = int(args.repeat)
 
     ## run proper tests
     if args.untilfailure is True:
@@ -125,20 +132,20 @@ if __name__ == "__main__":
             print("Tests iteration:", counter)
             counter += 1
             suite = get_test_cases(args.run_test)
-            testResult = unittest.TextTestRunner(verbosity=verbosity).run(suite)
-            if testResult.wasSuccessful() is False:
+            test_result = unittest.TextTestRunner(verbosity=verbosity).run(suite)
+            if test_result.wasSuccessful() is False:
                 sys.exit(1)
             print("\n")
-    elif testsRepeats > 0:
-        for counter in range(1, testsRepeats + 1):
+    elif tests_repeats > 0:
+        for counter in range(1, tests_repeats + 1):
             print("Tests iteration:", counter)
             suite = get_test_cases(args.run_test)
-            testResult = unittest.TextTestRunner(verbosity=verbosity).run(suite)
-            if testResult.wasSuccessful() is False:
+            test_result = unittest.TextTestRunner(verbosity=verbosity).run(suite)
+            if test_result.wasSuccessful() is False:
                 sys.exit(1)
             print("\n")
     else:
         suite = get_test_cases(args.run_test)
-        testResult = unittest.TextTestRunner(verbosity=verbosity).run(suite)
-        if testResult.wasSuccessful() is False:
+        test_result = unittest.TextTestRunner(verbosity=verbosity).run(suite)
+        if test_result.wasSuccessful() is False:
             sys.exit(1)

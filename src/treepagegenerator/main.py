@@ -7,19 +7,21 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     ## following import success only when file is directly executed from command line
     ## otherwise will throw exception when executing as parameter for "python -m"
-    # pylint: disable=W0611
+    # pylint: disable=E0401,W0611
+    # ruff: noqa: F401
     import __init__
-except ImportError:
+
     ## when import fails then it means that the script was executed indirectly
     ## in this case __init__ is already loaded
-    pass
 
-import sys
 import argparse
 import logging
+import sys
 
 from treepagegenerator import logger
 from treepagegenerator.generator.dataloader import DataLoader
@@ -34,7 +36,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def process_generate(args):
     _LOGGER.info("starting generator")
-    _LOGGER.debug("logging to file: %s", logger.log_file)
+    _LOGGER.debug("logging to file: %s", logger.output_file)
     config_path = args.config
     embedcss = args.embedcss
     embedimages = args.embedimages
@@ -56,7 +58,7 @@ def process_generate(args):
 
 
 def process_info(args):
-    _LOGGER.debug("logging to file: %s", logger.log_file)
+    _LOGGER.debug("logging to file: %s", logger.output_file)
     model_path = args.data
 
     data_loader = DataLoader(model_path)
@@ -84,7 +86,9 @@ def main():
 
     description = "generate tree static pages"
     subparser = subparsers.add_parser(
-        "generate", help=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        "generate",
+        help=description,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     subparser.description = description
     subparser.set_defaults(func=process_generate)
@@ -92,10 +96,16 @@ def main():
     subparser.add_argument("--embedcss", action="store_true", default=False, help="Embed CSS styles")
     subparser.add_argument("--embedimages", action="store_true", default=False, help="Embed images")
     subparser.add_argument(
-        "--singlepagemode", action="store_true", default=False, help="Embed everything into single page"
+        "--singlepagemode",
+        action="store_true",
+        default=False,
+        help="Embed everything into single page",
     )
     subparser.add_argument(
-        "--allowjs", action="store_true", default=False, help="Allow JavaScript (for single page mode)"
+        "--allowjs",
+        action="store_true",
+        default=False,
+        help="Allow JavaScript (for single page mode)",
     )
     subparser.add_argument("--outindexname", action="store", default="index.html", help="Name of main index page")
     subparser.add_argument("--outdir", action="store", required=True, help="Path to output directory")
@@ -114,13 +124,14 @@ def main():
 
     if args.listtools is True:
         tools_list = list(subparsers.choices.keys())
+        # ruff: noqa: T201
         print(", ".join(tools_list))
         return 0
 
     if args.logall is True:
-        logger.configure(logLevel=logging.DEBUG)
+        logger.configure(log_level=logging.DEBUG)
     else:
-        logger.configure(logLevel=logging.INFO)
+        logger.configure(log_level=logging.INFO)
 
     if "func" not in args or args.func is None:
         ## no command given -- print help message

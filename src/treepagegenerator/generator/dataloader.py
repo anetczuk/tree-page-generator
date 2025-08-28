@@ -6,12 +6,13 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import os
-import logging
-from typing import Dict, Any, List, Set
-import math
 import json
+import logging
+import math
+import os
 import shutil
+from typing import Any
+
 import validators
 from PIL import Image
 
@@ -64,8 +65,8 @@ class NavDict:
             return []
         return [item[0] for item in item_list]
 
-    def prev_id_list(self, curr_item) -> List[str]:
-        ret_list: List[str] = []
+    def prev_id_list(self, curr_item) -> list[str]:
+        ret_list: list[str] = []
         prev_items = self.prev_id(curr_item)
         if not prev_items:
             return ret_list
@@ -82,8 +83,8 @@ class NavDict:
         ret_list.reverse()
         return ret_list
 
-    def prev_items_list(self, curr_id) -> List[str]:
-        ret_list: List[str] = []
+    def prev_items_list(self, curr_id) -> list[str]:
+        ret_list: list[str] = []
         prev_items = self.prev_item(curr_id)
         if not prev_items:
             return ret_list
@@ -128,7 +129,7 @@ class DataLoader:
 
         ## key: characteristic id
         ## value: list of species
-        self.potential_species: Dict[str, List[str]] = self._load_potential_species()
+        self.potential_species: dict[str, list[str]] = self._load_potential_species()
 
         ## [  defs_dict: {  "defs": [ str ]
         ##                  "label": str
@@ -138,33 +139,33 @@ class DataLoader:
         ##                  "description": str
         ##               }
         ## ]
-        self.defs_list: List[Dict[str, Any]] = self._load_all_defs()
+        self.defs_list: list[dict[str, Any]] = self._load_all_defs()
 
         self.translation_dict = self._load_transaltion()
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         _LOGGER.debug("loading config from file %s", self.config_path)
-        with open(self.config_path, "r", encoding="utf8") as fp:
+        with open(self.config_path, encoding="utf8") as fp:
             return json.load(fp)
 
-    def _load_model(self) -> Dict[str, Any]:
+    def _load_model(self) -> dict[str, Any]:
         model_dir = self.config_dict["model_dir"]
         config_dir = os.path.dirname(self.config_path)
         self.model_path = os.path.join(config_dir, model_dir)
 
         _LOGGER.debug("loading model from file %s", self.model_path)
-        with open(self.model_path, "r", encoding="utf8") as fp:
+        with open(self.model_path, encoding="utf8") as fp:
             return json.load(fp)
 
     def _load_nav_dict(self) -> NavDict:
         model_data = self.model_data.get("data")
         return NavDict(model_data)
 
-    def _load_potential_species(self) -> Dict[str, List[str]]:
+    def _load_potential_species(self) -> dict[str, list[str]]:
         model_data = self.model_data.get("data")
 
         ## get leaves
-        leaves_list: List[str] = []
+        leaves_list: list[str] = []
         for key, val_list in model_data.items():
             leaf = True
             for val in val_list:
@@ -175,13 +176,13 @@ class DataLoader:
             if leaf:
                 leaves_list.append(key)
 
-        potential_species: Dict[str, List[str]] = {}
+        potential_species: dict[str, list[str]] = {}
         while leaves_list:
             item_key: str = leaves_list.pop(0)
             item_data = model_data[item_key]
 
             ## get direct targets
-            target_labels: List[str] = []
+            target_labels: list[str] = []
             for val in item_data:
                 target = val.get("target")
                 if target:
@@ -202,10 +203,10 @@ class DataLoader:
 
         return potential_species
 
-    def _load_transaltion(self) -> Dict[str, str]:
+    def _load_transaltion(self) -> dict[str, str]:
         if not self.translation_path:
             return None
-        with open(self.translation_path, "r", encoding="utf8") as fp:
+        with open(self.translation_path, encoding="utf8") as fp:
             return json.load(fp)
 
     ## [  {  "defs": [ str ]
@@ -216,7 +217,8 @@ class DataLoader:
     ##       "description": str
     ##    }
     ## ]
-    def _load_all_defs(self) -> List[Dict[str, Any]]:
+    # ruff: noqa: C901, PLR0912, PLR0915
+    def _load_all_defs(self) -> list[dict[str, Any]]:
         ret_list = []
 
         defs_dirs = self.config_dict["defs_dirs"]
@@ -252,7 +254,7 @@ class DataLoader:
                 ## ] || def_items_dict || defs_item
                 defs_data = None
                 try:
-                    with open(defs_file_path, "r", encoding="utf8") as fp:
+                    with open(defs_file_path, encoding="utf8") as fp:
                         defs_data = json.load(fp)
                 except Exception:
                     _LOGGER.error("unable to load JSON file: %s", defs_file_path)
@@ -314,10 +316,10 @@ class DataLoader:
         total_count += len(self.get_all_leafs())
         return total_count
 
-    def get_all_leafs(self) -> List[str]:
+    def get_all_leafs(self) -> list[str]:
         model_data = self.model_data.get("data")
-        leaves_list: List[str] = []
-        for _key, val_list in model_data.items():
+        leaves_list: list[str] = []
+        for val_list in model_data.values():
             for val in val_list:
                 target_item = val.get("target")
                 if target_item:
@@ -334,7 +336,7 @@ class DataLoader:
 
     def print_info(self):
         json_str = json.dumps(self.model_data, indent=4)
-        print(f"model data:\n{json_str}")
+        _LOGGER.info("model data:\n%s", json_str)
 
         # model_values = to_dict_col_vals(self.model_data)
         # cols_list = list(model_values.keys())[1:]
@@ -347,19 +349,18 @@ class DataLoader:
         # total_count = self.get_total_count()
         # print("total_count:", total_count)
 
-    def get_all_defs(self) -> List[DefItem]:
+    def get_all_defs(self) -> list[DefItem]:
         if not self.defs_list:
             return []
-        defs_set: Set[DefItem] = set()
+        defs_set: set[DefItem] = set()
         for defs_dict in self.defs_list:
             defs = defs_dict.get("defs", [])
             label = defs_dict.get("label")
             item_casesensitive = defs_dict.get("casesensitive", False)
             for item in defs:
                 defs_set.add(DefItem(item, label, item_casesensitive))
-        defs_list: List[DefItem] = list(defs_set)
-        defs_list = sorted(defs_list, key=lambda xtuple: (-len(xtuple.defvalue), xtuple.defvalue, xtuple.label))
-        return defs_list
+        defs_list: list[DefItem] = list(defs_set)
+        return sorted(defs_list, key=lambda xtuple: (-len(xtuple.defvalue), xtuple.defvalue, xtuple.label))
 
     ## defs_dict: {  def: str,
     ##               item:  [  {  "label": str
@@ -370,10 +371,10 @@ class DataLoader:
     ##                         }
     ##                      ]
     ##            }
-    def get_defs_dict(self) -> Dict[str, Any]:
+    def get_defs_dict(self) -> dict[str, Any]:
         if not self.defs_list:
             return {}
-        ret_dict: Dict[str, Any] = {}
+        ret_dict: dict[str, Any] = {}
         for defs_dict in self.defs_list:
             names_list = defs_dict.get("defs", [])
             copied_item = defs_dict.copy()
@@ -384,16 +385,15 @@ class DataLoader:
                 ret_dict[def_name] = def_list
         return ret_dict
 
-    def get_defs_keywords(self) -> List[DefItem]:
+    def get_defs_keywords(self) -> list[DefItem]:
         ret_list = []
         defs_dict = self.get_defs_dict()
         for key, item_list in defs_dict.items():
-            for item in item_list:
-                ret_list.append(DefItem(key, item.get("label"), item.get("casesensitive")))
+            ret_list.extend([DefItem(key, item.get("label"), item.get("casesensitive")) for item in item_list])
         ret_list.sort(key=lambda x: x.defvalue)
         return ret_list
 
-    def get_defs(self, def_name) -> List[Any]:
+    def get_defs(self, def_name) -> list[Any]:
         if not self.defs_list:
             return []
         ret_list = []
@@ -407,13 +407,13 @@ class DataLoader:
 # ===================================================
 
 
-def get_translation(translation_dict: Dict[str, Any], key: str, group: str = None) -> str:
+def get_translation(translation_dict: dict[str, Any], key: str, group: str = None) -> str:
     if translation_dict is None:
         return key
     if is_url(key):
         return key
     if group is not None:
-        group_dict: Dict[str, str] = translation_dict.get(group)
+        group_dict: dict[str, str] = translation_dict.get(group)
         return get_translation(group_dict, key)
     value = translation_dict.get(key)
     if value is not None:
@@ -429,7 +429,7 @@ def is_url(value):
 # ================================================================
 
 
-def copy_image(source_path, dest_path, resize=False):
+def copy_image(source_path, dest_path, *, resize=False):
     parts = os.path.split(dest_path)
     os.makedirs(parts[0], exist_ok=True)
 
@@ -443,6 +443,7 @@ def copy_image(source_path, dest_path, resize=False):
         return
 
     with Image.open(source_path) as src_img:
+        new_img = src_img
         file_area = src_img.size[0] * src_img.size[1]
         factor = file_area / 1048576  # 1024 x 1024
         if factor > 1.0:
@@ -450,6 +451,6 @@ def copy_image(source_path, dest_path, resize=False):
             root_factor = math.sqrt(factor)
             width = int(src_img.size[0] / root_factor)
             height = int(src_img.size[1] / root_factor)
-            src_img = src_img.resize((width, height), Image.LANCZOS)  # pylint: disable=no-member
+            new_img = src_img.resize((width, height), Image.LANCZOS)  # pylint: disable=no-member
             _LOGGER.debug("image %s resized from %s to %s by factor %s", dest_path, old_size, src_img.size, root_factor)
-        src_img.save(dest_path, optimize=True, quality=50)
+        new_img.save(dest_path, optimize=True, quality=50)

@@ -7,10 +7,9 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import os
-from typing import Dict, Any
-
 import json
+import os
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -57,7 +56,7 @@ def main():
 
     root_url = "https://antwiki.org"
     url = f"{SCRIPT_DIR}/antwiki_lasius_key.html"
-    with open(url, "r", encoding="utf-8") as file:
+    with open(url, encoding="utf-8") as file:
         html_content = file.read()
 
     # Parse the page
@@ -65,7 +64,7 @@ def main():
 
     # Main content div
     content_div = soup.find("div", {"id": "mw-content-text"})
-    div_child_list = content_div.findChildren("div", recursive=False)  # type: ignore
+    div_child_list = content_div.findChildren("div", recursive=False)  # type: ignore[union-attr]
     child_div = div_child_list[0]
 
     dict_data = {}
@@ -85,7 +84,7 @@ def main():
 
         elif tag.name in ("ul", "ol"):
             for li in tag.find_all("li"):
-                item_data: Dict[str, Any] = {"description": None, "next": None, "target": None}
+                item_data: dict[str, Any] = {"description": None, "next": None, "target": None}
                 item_text = li.get_text(strip=True)
                 pos = item_text.find(". .")
                 item_text = item_text[:pos]

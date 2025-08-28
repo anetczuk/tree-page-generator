@@ -11,8 +11,13 @@ cd "$SCRIPT_DIR"
 
 
 ./codecheck.sh
+
+echo
+echo
 ./doccheck.sh
+
 ./typecheck.sh
+
 ./mdcheck.sh
 
 

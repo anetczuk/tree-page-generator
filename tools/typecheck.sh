@@ -25,6 +25,7 @@ fi
 src_examples=$(find "$src_dir" -type f -name "*.py" -not -path "$src_dir/build/*")
 
 
+echo
 echo "running mypy"
 echo "ignore line warning using: # type: ignore"
 
@@ -35,15 +36,15 @@ mypy --cache-dir "$CACHE_DIR" --no-strict-optional --ignore-missing-imports --pr
      $src_examples $all_examples 2> "$MYPY_ERR_PATH" || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
-	cat "$MYPY_ERR_PATH"
-	# shellcheck disable=SC2002
-	ASSERTION=$(cat $MYPY_ERR_PATH | grep "AssertionError:")
-	if [ "$ASSERTION" == "" ]; then
-		exit 1
-	else
-		# mypy internal error
-		echo "detected mypy internal error"
-	fi
+    cat "$MYPY_ERR_PATH"
+    # shellcheck disable=SC2002
+    ASSERTION=$(cat $MYPY_ERR_PATH | grep "AssertionError:")
+    if [ "$ASSERTION" == "" ]; then
+        exit 1
+    else
+        # mypy internal error
+        echo "detected mypy internal error"
+    fi
 else
-	echo "mypy finished"
+    echo "mypy finished"
 fi

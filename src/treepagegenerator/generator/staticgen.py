@@ -7,22 +7,21 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import os
+import base64
 import io
 import logging
-
-from typing import Any, Dict, List, Tuple, Set
+import os
 import re
 import shutil
-import base64
-from PIL import Image
+from typing import Any
 
+from PIL import Image
 from showgraph.graphviz import Graph, set_node_style
 
-from treepagegenerator.utils import write_data, read_data
-from treepagegenerator.generator.dataloader import DataLoader, copy_image, DefItem
-from treepagegenerator.generator.utils import HTML_LICENSE
 from treepagegenerator.data import DATA_DIR
+from treepagegenerator.generator.dataloader import DataLoader, DefItem, copy_image
+from treepagegenerator.generator.utils import HTML_LICENSE
+from treepagegenerator.utils import read_data, write_data
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -32,10 +31,12 @@ _LOGGER = logging.getLogger(__name__)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
+# ruff: noqa: PLR0913
 def generate_pages(
     config_path,
     output_path,
     output_index_name=None,
+    *,
     embedcss=False,
     embedimages=False,
     singlepagemode=False,
@@ -121,7 +122,7 @@ class BaseGenerator:
     def prepare_model_item_descr(self):
         model_texts = {}
         model = self.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
+        model_data: dict[str, Any] = model.get("data", {})
         for item_id, desc_list in model_data.items():
             prepared_list = []
             for val in desc_list:
@@ -133,9 +134,9 @@ class BaseGenerator:
 
     def _prepare_dictionary_item_descr(self):
         def_texts = {}
-        defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
+        defs_dict: dict[str, Any] = self.data_loader.get_defs_dict()
         for keyword, keyword_data_list in defs_dict.items():
-            prepared_list: List[Any] = []
+            prepared_list: list[Any] = []
             for keyword_item in keyword_data_list:
                 def_text = keyword_item.get("text")
                 if not def_text:
@@ -155,13 +156,12 @@ class BaseGenerator:
         ## embed
         css_source_path = os.path.join(DATA_DIR, "styles.css")
         css_content = read_data(css_source_path)
-        page_script_content = f"""<style>
+        return f"""<style>
 {css_content}
     </style>
 """
-        return page_script_content
 
-    def get_image_paths_from_defs(self, keywords_list: List[DefItem]):
+    def get_image_paths_from_defs(self, keywords_list: list[DefItem]):
         ret_list = []
         defs_dict = self.data_loader.get_defs_dict()
         for keyword_def in keywords_list:
@@ -179,8 +179,7 @@ class BaseGenerator:
     def prepare_photo_dest_path(self, source_path):
         base_path = get_path_components(source_path, 2)  ## filename with dir name
         base_path = prepare_filename(base_path)
-        dest_img_path = os.path.join(self.out_img_dir, base_path)
-        return dest_img_path
+        return os.path.join(self.out_img_dir, base_path)
 
     def _prepare_img_tag(self, photo_path):
         if not photo_path:
@@ -205,12 +204,12 @@ class BaseGenerator:
         image_id = prepare_image_id(img_rel_path)
         return f"""<div class="image {image_id}"></div>"""
 
-    def _prepare_description(self, description) -> Tuple[str, List[DefItem]]:
-        description_defs_list: List[DefItem] = self.data_loader.get_all_defs()
+    def _prepare_description(self, description) -> tuple[str, list[DefItem]]:
+        description_defs_list: list[DefItem] = self.data_loader.get_all_defs()
         ret_descr = description
-        ret_keywords: List[DefItem] = []
+        ret_keywords: list[DefItem] = []
 
-        places: List[Tuple[int, DefItem]] = find_all_defs(description, description_defs_list)
+        places: list[tuple[int, DefItem]] = find_all_defs(description, description_defs_list)
         places = sorted(places, key=lambda x: (x[0], -len(x[1].defvalue)))
         places.reverse()
         for place_item in places:
@@ -278,12 +277,11 @@ class BaseGenerator:
             img_class_list.append(css_content)
 
         css_content = "\n".join(img_class_list)
-        page_script_content = f"""<style>
+        return f"""<style>
 /* images */
 {css_content}
     </style>
 """
-        return page_script_content
 
     def get_all_keywords(self):
         model_texts = self.prepare_model_item_descr()
@@ -294,10 +292,9 @@ class BaseGenerator:
                     continue
                 _desc_raw, _desc, desc_keys = prep_data
                 keywords_list.extend(desc_keys)
-        keywords_list = self.get_related_keywords(keywords_list)
-        return keywords_list
+        return self.get_related_keywords(keywords_list)
 
-    def get_related_keywords(self, keywords_list: List[DefItem]) -> List[DefItem]:
+    def get_related_keywords(self, keywords_list: list[DefItem]) -> list[DefItem]:
         def_texts = self._prepare_dictionary_item_descr()
 
         ## extend keywords list
@@ -316,7 +313,7 @@ class BaseGenerator:
                     if item.defvalue not in found_keywords:
                         found_keywords.add(item.defvalue)
                         keywords_list.append(item)
-        def_key_list = sorted(list(set(keywords_list)), key=lambda x: x.defvalue.lower())
+        def_key_list = sorted(set(keywords_list), key=lambda x: x.defvalue.lower())
 
         ## remove duplicates
         def_key_list = list({item.defvalue: item for item in def_key_list}.values())
@@ -342,7 +339,8 @@ class BaseGenerator:
         prev_content += "</div>"
         return prev_content
 
-    def prepare_defs_table(self, keywords_list: List[DefItem]):  # pylint: disable=R0914
+    # ruff: noqa: C901, PLR0915
+    def prepare_defs_table(self, keywords_list: list[DefItem]):  # pylint: disable=R0914
         if not keywords_list:
             return None
 
@@ -360,7 +358,7 @@ class BaseGenerator:
 
         def_texts = self._prepare_dictionary_item_descr()
 
-        defs_dict: Dict[str, Any] = self.data_loader.get_defs_dict()
+        defs_dict: dict[str, Any] = self.data_loader.get_defs_dict()
         keywords_content = ""
         keywords_content += """<table>\n"""
         keywords_content += """<tr class="title_row"> <th colspan="2">Keywords:</th> </tr>\n"""
@@ -412,9 +410,7 @@ class BaseGenerator:
 
         keywords_content = keywords_content.replace("\n", "\n    ")
         keywords_content = keywords_content.strip()
-        keywords_content = "    " + keywords_content
-
-        return keywords_content
+        return "    " + keywords_content
 
     def gen_link(self, target_subpath, label, a_class=None):
         class_attr = ""
@@ -511,7 +507,7 @@ function change_page_to(page_id) {
 {content}
 </div>"""
 
-        output = f"""\
+        return f"""\
 <!DOCTYPE html>
 <html>
 {HTML_LICENSE}
@@ -528,7 +524,6 @@ function change_page_to(page_id) {
 </body>
 </html>
 """
-        return output
 
     def store_content(self, content):
         page_path = self.out_path
@@ -630,7 +625,7 @@ class PageModelGenerator:
 
     def generate(self):
         model = self.base_gen.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
+        model_data: dict[str, Any] = model.get("data", {})
 
         ## prepare characteristic pages
         for item_id in model_data:
@@ -667,9 +662,9 @@ class PageModelGenerator:
 
         self.base_gen.store_content(content)
 
-    def _prepare_model_subpage_content(self, model_item_id) -> Tuple[str, List[DefItem]]:
+    def _prepare_model_subpage_content(self, model_item_id) -> tuple[str, list[DefItem]]:
         model = self.base_gen.data_loader.model_data
-        model_data: Dict[str, Any] = model.get("data", {})
+        model_data: dict[str, Any] = model.get("data", {})
         desc_list = model_data[model_item_id]
         columns_num = len(desc_list)
 
@@ -696,7 +691,7 @@ class PageModelGenerator:
             char_keywords.update(desc_keys)
             table_content += f"""\n   <td>{desc}</td>"""
         table_content += "\n</tr>\n"
-        keywords_list: List[DefItem] = list(char_keywords)
+        keywords_list: list[DefItem] = list(char_keywords)
 
         ## "next" row
         table_content += """<tr class="navigation_row"> """
@@ -796,7 +791,7 @@ class PageModelGenerator:
             char_link = self.base_gen.gen_link(f"{prev_id}.html", prev_id)
             characteristic_content += f"""<li>{char_link}: {desc}</li>\n"""
         characteristic_content += "</ul>\n"
-        keywords_list: List[DefItem] = list(char_keywords)
+        keywords_list: list[DefItem] = list(char_keywords)
 
         ## keywords row
         if keywords_list:
@@ -993,11 +988,13 @@ class StaticGenerator:
     def __init__(self):  # noqa: F811
         self.base_gen: BaseGenerator = None
 
+    # ruff: noqa: PLR0913
     def generate(
         self,
         data_loader: DataLoader,
         output_dir_path,
         output_index_name=None,
+        *,
         embedcss=False,
         embedimages=False,
         singlepagemode=False,
@@ -1058,19 +1055,16 @@ class StaticGenerator:
 def get_path_components(path, level):
     remaining = path
     ret = None
-    for _i in range(0, level):
+    for _i in range(level):
         parts = os.path.split(remaining)
         head = parts[0]
         tail = parts[1]
-        if not ret:
-            ret = tail
-        else:
-            ret = os.path.join(tail, ret)
+        ret = tail if not ret else os.path.join(tail, ret)
         remaining = head
     return ret
 
 
-def find_all_defs(content, def_list: List[DefItem]) -> List[Tuple[int, DefItem]]:
+def find_all_defs(content, def_list: list[DefItem]) -> list[tuple[int, DefItem]]:
     palces_list = []
     for def_item in def_list:
         def_key = def_item.defvalue
@@ -1081,8 +1075,7 @@ def find_all_defs(content, def_list: List[DefItem]) -> List[Tuple[int, DefItem]]
         places = find_all(item_content, def_key)
         if not places:
             continue
-        for pos in places:
-            palces_list.append((pos, def_item))
+        palces_list.extend([(pos, def_item) for pos in places])
 
     ret_list = []
     recent_end = -1
@@ -1098,7 +1091,7 @@ def find_all_defs(content, def_list: List[DefItem]) -> List[Tuple[int, DefItem]]
     return ret_list
 
 
-def find_all(content, substring, match_subword=False) -> List[int]:
+def find_all(content, substring, *, match_subword=False) -> list[int]:
     ret_list = []
     content_endpos = len(content)
     substr_len = len(substring)
@@ -1138,8 +1131,7 @@ def prepare_page_id(page_path: str):
     page_id = page_id.replace(".", "_")
     page_id = page_id.replace("-", "_")
     page_id = page_id.replace("/", "_")
-    page_id = page_id.replace("\\", "_")
-    return page_id
+    return page_id.replace("\\", "_")
 
 
 def prepare_filename(name: str):
@@ -1147,14 +1139,13 @@ def prepare_filename(name: str):
     name = re.sub(r"\s+", "_", name)
     # name = name.replace(".", "_")
     name = name.replace("(", "_")
-    name = name.replace(")", "_")
-    return name
+    return name.replace(")", "_")
 
 
 ## ================================================================
 
 
-def generate_graph(data_loader: DataLoader, active_item: str, add_href=True) -> Graph:
+def generate_graph(data_loader: DataLoader, active_item: str, *, add_href=True) -> Graph:
     graph: Graph = Graph()
     base_graph = graph.base_graph
     base_graph.set_name("model_graph")
@@ -1163,7 +1154,7 @@ def generate_graph(data_loader: DataLoader, active_item: str, add_href=True) -> 
 
     model_data = data_loader.model_data["data"]
 
-    added_nodes: Set[str] = set()
+    added_nodes: set[str] = set()
 
     ## add edges
     for key, val_list in model_data.items():
@@ -1195,8 +1186,8 @@ def generate_graph(data_loader: DataLoader, active_item: str, add_href=True) -> 
                     if add_href:
                         created_node.set("href", f"{node_filename}.html")
 
-                new_edge = graph.addEdge(*new_edge)
-                new_edge.set("color", "black")  # type: ignore
+                added_edge = graph.addEdge(*new_edge)
+                added_edge.set("color", "black")
     return graph
 
 
@@ -1204,5 +1195,4 @@ def get_graph_svg(graph: Graph):
     with io.BytesIO() as buffer:
         graph.write(buffer, file_format="svg")
         contents = buffer.getvalue()
-        contents_str = contents.decode("utf-8")
-        return contents_str
+        return contents.decode("utf-8")
