@@ -147,7 +147,17 @@ set -eu
 
 
 ### creating project start script
-create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; $SRC_DIR/testtreepagegenerator/runtests.py \$@; exit\"" "$VENV_DIR/runtests.py"
+pushd "${SRC_DIR}" > /dev/null
+# shellcheck disable=SC2010,SC2035
+TEST_DIRS=$(ls -d */ | grep test)
+popd > /dev/null
+TEST_DIRS_NUM=$(echo "${TEST_DIRS}" | wc -l)
+if [[ ${TEST_DIRS_NUM} -ne 1 ]]; then
+    echo "unable to determine tests directory - exiting"
+    exit 1
+fi
+TEST_SCRIPT="${SRC_DIR}/${TEST_DIRS}runtests.py"
+create_venv_shortcut "$VENV_DIR/activatevenv.sh \"set -eu; ${TEST_SCRIPT} \$@; exit\"" "$VENV_DIR/runtests.py"
 
 
 ### install required packages

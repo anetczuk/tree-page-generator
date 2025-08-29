@@ -24,16 +24,18 @@ while [[ $# -gt 0 ]]; do
 done
 
 
+check_dirs=()
 src_dir="$SCRIPT_DIR/../src"
-
+check_dirs+=("$src_dir")
 examples_dir="$SCRIPT_DIR/../examples"
-if [ ! -d "$examples_dir" ]; then
-    examples_dir=""
+if [ -d "$examples_dir" ]; then
+    check_dirs+=("$examples_dir")
 fi
+check_dirs+=("$SCRIPT_DIR")
 
 
 echo "running black"
-black --line-length=120 "$src_dir" "$examples_dir" "$SCRIPT_DIR"
+black --line-length=120 "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -63,7 +65,7 @@ ignore_errors=E115,E126,E201,E202,E203,E221,E241,E262,E265,E266,E402,E501,W391,D
 echo
 echo "running pycodestyle"
 echo "to ignore warning inline add comment at the end of line: # noqa"
-pycodestyle --show-source --statistics --count --ignore="$ignore_errors" "$src_dir" "$examples_dir" "$SCRIPT_DIR"
+pycodestyle --show-source --statistics --count --ignore="$ignore_errors" "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -80,7 +82,7 @@ ignore_errors=$ignore_errors,F401
 echo
 echo "running flake8"
 echo "to ignore warning for one line put following comment in end of line: # noqa: <warning-code>"
-python3 -m flake8 --show-source --statistics --count --ignore="$ignore_errors" "$src_dir" "$examples_dir" "$SCRIPT_DIR"
+python3 -m flake8 --show-source --statistics --count --ignore="$ignore_errors" "${check_dirs[@]}"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -91,9 +93,15 @@ fi
 echo "flake8 -- no warnings found"
 
 
-example_files=$(find "$examples_dir" -type f -name "*.py")
-tools_files=$(find "$SCRIPT_DIR" -type f -name "*.py")
+check_files=""
 src_files=$(find "$src_dir" -type f -name "*.py")
+check_files="${check_files} ${src_files}"
+example_files=$(find "$examples_dir" -type f -name "*.py") || true
+if [[ "${example_files}" != "" ]]; then
+    check_files="${check_files} ${example_files}"
+fi
+tools_files=$(find "$SCRIPT_DIR" -type f -name "*.py")
+check_files="${check_files} ${tools_files}"
 
 
 echo
@@ -101,7 +109,7 @@ echo "running pylint3"
 echo "to ignore warning for module put following line on top of file: # pylint: disable=<check_id>"
 echo "to ignore warning for one line put following comment in end of line: # pylint: disable=<check_id>"
 # shellcheck disable=SC2086
-pylint --rcfile="$SCRIPT_DIR/pylint3.config" $src_files $example_files $tools_files
+pylint --rcfile="$SCRIPT_DIR/pylint3.config" $check_files
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
@@ -111,11 +119,11 @@ echo "pylint3 -- no warnings found"
 
 echo
 echo "running ruff"
+echo "to ignore warning for module put following line on top of file: # ruff: noqa: <check_id>"
+echo "to ignore warning for one line put following comment in line before: # ruff: noqa: <check_id>"
 run_ruff() {
     local check_dir="${1}"
     echo "checking ${check_dir}"
-    echo "to ignore warning for module put following line on top of file: # ruff: noqa: <check_id>"
-    echo "to ignore warning for one line put following comment in line before: # ruff: noqa: <check_id>"
     pushd "${check_dir}" > /dev/null
 
     local RUFF_ARGS=()
@@ -175,9 +183,11 @@ run_ruff() {
         exit $exit_code
     fi
 }
-run_ruff "${src_dir}" 
-run_ruff "${examples_dir}" 
-run_ruff "${SCRIPT_DIR}" 
+
+for dir in "${check_dirs[@]}"; do
+   run_ruff "${dir}"
+done
+
 echo "ruff -- no warnings found"
 
 
@@ -191,7 +201,7 @@ skip_list="B301,B403"
 
 #echo "to ignore warning for one line put following comment in end of line: # nosec
 # shellcheck disable=SC2086
-bandit --skip "${skip_list}" -r "$src_dir" $example_files "$SCRIPT_DIR" -x "$src_dir/test*"
+bandit --skip "${skip_list}" -r "${check_dirs[@]}" -x "$src_dir/test*"
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
@@ -224,6 +234,7 @@ echo "found sh files to check: $found_files"
 ## SC2155 (warning): Declare and assign separately to avoid masking return values.
 EXCLUDE_LIST="SC2002,SC2129,SC2155"
 
+echo
 echo "to suppress line warning add before the line: # shellcheck disable=<code>"
 # shellcheck disable=SC2068
 shellcheck -a -x --exclude "$EXCLUDE_LIST" ${found_files[@]}

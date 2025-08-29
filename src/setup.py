@@ -8,6 +8,7 @@ from typing import Any
 
 from setuptools import find_packages, setup
 
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
